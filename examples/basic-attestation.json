@@ -1,0 +1,21 @@
+{
+  "apex_metadata": {
+    "protocol": "APEX-ATA",
+    "version": "1.0.0",
+    "timestamp": "2026-01-25T20:05:00Z"
+  },
+  "model": {
+    "model_id": "example-model-v1",
+    "provider": "example-provider"
+  },
+  "execution": {
+    "input_hash": "sha256:abc123",
+    "output_hash": "sha256:def456",
+    "started_at": "2026-01-25T20:04:30Z",
+    "ended_at": "2026-01-25T20:04:59Z"
+  },
+  "declarations": {
+    "human_in_the_loop": false,
+    "risk_classification": "medium"
+  }
+}
