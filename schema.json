@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "APEX-ATA",
+  "description": "A neutral, machine-readable format for AI computation attestation records.",
+  "type": "object",
+  "properties": {
+    "apex_metadata": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "const": "APEX-ATA"
+        },
+        "version": {
+          "type": "string"
+        },
+        "issued_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["protocol", "version", "issued_at"]
+    },
+    "attestation": {
+      "type": "object",
+      "properties": {
+        "model_id": {
+          "type": "string"
+        },
+        "input_hash": {
+          "type": "string"
+        },
+        "output_hash": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "human_in_the_loop": {
+          "type": "boolean"
+        },
+        "declared_risk_class": {
+          "type": "string",
+          "enum": ["minimal", "limited", "high", "prohibited"]
+        }
+      },
+      "required": [
+        "model_id",
+        "input_hash",
+        "output_hash",
+        "timestamp"
+      ]
+    }
+  },
+  "required": ["apex_metadata", "attestation"]
+}
