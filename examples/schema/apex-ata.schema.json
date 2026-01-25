@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-ata.org/schema/v1.0.0/apex-ata.schema.json",
+  "title": "APEX-ATA",
+  "description": "APEX AI Computation Attestation — neutral reference schema",
+  "type": "object",
+  "required": ["apex_metadata", "attestation"],
+  "properties": {
+    "apex_metadata": {
+      "type": "object",
+      "required": ["protocol", "version", "timestamp"],
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "const": "APEX-ATA"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "required": ["model_id", "execution_hash"],
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "description": "Identifier of the AI model used"
+        },
+        "execution_hash": {
+          "type": "string",
+          "description": "Hash of inputs and outputs"
+        },
+        "human_in_the_loop": {
+          "type": "boolean"
+        },
+        "declared_risk_class": {
+          "type": "string",
+          "enum": ["minimal", "limited", "high", "prohibited"]
+        }
+      }
+    }
+  }
+}
