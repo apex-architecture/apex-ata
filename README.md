@@ -5,6 +5,11 @@ AI computation attestations.
 
 It defines how facts about an AI computation are written down —
 not how they are judged.
+## Status
+
+This repository provides a reference schema.
+
+It is published as-is, without warranty, and may evolve over time.
 
 ## What This Is
 
