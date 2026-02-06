@@ -1,0 +1,48 @@
+{
+  "registry": "APEX-ATA",
+  "status": "live",
+  "updated": "2026-02-06",
+  "description": "Public, append-only registry of AI computation attestations and infrastructure actors. Commit history is the canonical timestamp.",
+  "entries": [
+    {
+      "id": "ATA-2026-0001",
+      "entity": "BHP Group",
+      "type": "Public Company",
+      "primary_jurisdiction": "Australia",
+      "operations": "Global",
+      "sector": ["Resources", "Infrastructure"],
+      "status": "Unverified",
+      "source": "https://www.bhp.com"
+    },
+    {
+      "id": "ATA-2026-0005",
+      "entity": "Meta Platforms, Inc.",
+      "type": "Public Company",
+      "primary_jurisdiction": "United States",
+      "operations": "Global",
+      "sector": ["AI", "Compute", "Infrastructure"],
+      "status": "Unverified",
+      "source": "https://about.meta.com"
+    },
+    {
+      "id": "ATA-2026-0007",
+      "entity": "NVIDIA Corporation",
+      "type": "Public Company",
+      "primary_jurisdiction": "United States",
+      "operations": "Global",
+      "sector": ["Semiconductors", "AI", "Data Center"],
+      "status": "Unverified",
+      "source": "https://www.nvidia.com"
+    }
+  ],
+  "citation_pattern": "APEX-ATA • ATA-YYYY-NNNN",
+  "integrity": {
+    "model": "append-only",
+    "anchor": "git-commit-history"
+  },
+  "public_posture": {
+    "private_data": false,
+    "speculative_claims": false,
+    "audit_ready": true
+  }
+}
