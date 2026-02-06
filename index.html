@@ -1,747 +1,791 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>APEX-ATA Ledger</title>
-  <meta name="description" content="Authority you can cite. Evidence you can anchor."/>
-  <meta name="theme-color" content="#070a10"/>
+  <meta name="theme-color" content="#05060a" />
+  <meta name="description" content="Authority you can cite. Evidence you can anchor. The public face of the APEX-ATA Ledger." />
 
   <style>
     :root{
-      --bg0:#05070c;
-      --bg1:#070a10;
-      --glass: rgba(255,255,255,.055);
-      --glass2: rgba(255,255,255,.035);
-      --line: rgba(255,255,255,.11);
-      --text: rgba(255,255,255,.90);
-      --muted: rgba(255,255,255,.60);
-      --faint: rgba(255,255,255,.38);
-      --gold:#d7b56d;
-      --gold2:#b8923a;
-      --ok:#45d483;
-      --warn:#ffcc66;
-      --bad:#ff5d6c;
-      --shadow: 0 24px 70px rgba(0,0,0,.58);
-      --shadow2: 0 12px 34px rgba(0,0,0,.46);
-      --r:18px;
-      --r2:26px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --bg0:#04050a;
+      --bg1:#070913;
+      --glass: rgba(10,12,18,.55);
+      --glass2: rgba(10,12,18,.35);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.06);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.66);
+      --faint: rgba(255,255,255,.46);
+
+      --gold: rgba(214,175,82,1);
+      --gold2: rgba(214,175,82,.65);
+      --gold3: rgba(214,175,82,.25);
+
+      --good: rgba(88,255,171,.9);
+
+      --r-xl: 22px;
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --shadow2: 0 10px 28px rgba(0,0,0,.45);
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
-      font-family:var(--sans);
       color:var(--text);
-      background: radial-gradient(1400px 700px at 20% 10%, rgba(215,181,109,.14), transparent 55%),
-                  radial-gradient(1000px 700px at 85% 15%, rgba(255,255,255,.05), transparent 55%),
-                  linear-gradient(180deg, var(--bg0), var(--bg1));
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(214,175,82,.08), transparent 60%),
+        radial-gradient(900px 700px at 80% 30%, rgba(120,140,255,.06), transparent 60%),
+        radial-gradient(1200px 1000px at 50% 90%, rgba(214,175,82,.05), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
       overflow-x:hidden;
     }
 
-    /* === APEX MOTION LAYERS === */
+    /* particle layer */
     #fx{
       position:fixed; inset:0;
-      z-index:-3;
-      background: radial-gradient(1200px 900px at 50% 80%, rgba(255,255,255,.03), transparent 60%);
-    }
-
-    /* Big APEX logo background layer (always present) */
-    #apexMark{
-      position:fixed; inset:0;
-      z-index:-2;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      z-index:0;
       pointer-events:none;
-      opacity:.18; /* tune this if you want stronger/weaker */
-      filter: blur(0px);
-      transform: translateZ(0);
-    }
-    #apexMark svg{
-      width:min(900px, 130vw);
-      height:auto;
-      opacity:.95;
-      filter: drop-shadow(0 30px 80px rgba(0,0,0,.55));
+      opacity:.75;
+      filter:saturate(1.05) contrast(1.02);
     }
 
-    /* soft vignette + haze */
-    #haze{
+    /* watermark logo layer (YOUR IMAGE NAME HERE) */
+    .watermark{
       position:fixed; inset:0;
-      z-index:-1;
+      z-index:1;
+      pointer-events:none;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding:6vh 0;
+      opacity:.18;
+      mix-blend-mode:screen;
+    }
+    .watermark .mark{
+      width:min(900px, 110vw);
+      height:min(560px, 60vh);
+      background:
+        radial-gradient(closest-side, rgba(214,175,82,.10), transparent 70%),
+        url("./apex-sigil.png") center/contain no-repeat;
+      opacity:.95;
+      transform: translateY(2vh);
+    }
+
+    /* top haze */
+    .haze{
+      position:fixed; inset:-20% -20% auto -20%;
+      height:55vh;
+      z-index:1;
       pointer-events:none;
       background:
-        radial-gradient(900px 600px at 30% 20%, rgba(215,181,109,.10), transparent 60%),
-        radial-gradient(900px 600px at 80% 30%, rgba(255,255,255,.05), transparent 60%),
-        radial-gradient(1200px 900px at 50% 100%, rgba(0,0,0,.65), transparent 55%);
-      mix-blend-mode: screen;
-      opacity:.85;
+        radial-gradient(closest-side at 30% 35%, rgba(214,175,82,.10), transparent 65%),
+        radial-gradient(closest-side at 80% 25%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.55), transparent 70%);
+      filter: blur(10px);
+      opacity:.9;
     }
 
-    .wrap{max-width:1120px;margin:0 auto;padding:22px 16px 60px;}
+    .wrap{
+      position:relative;
+      z-index:2;
+      max-width:1080px;
+      margin:0 auto;
+      padding: 24px 18px 70px;
+    }
 
     .topbar{
-      display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;
-    }
-    .brand{display:flex;align-items:center;gap:12px;min-width:240px;}
-    .orb{
-      width:34px;height:34px;border-radius:12px;
-      background:
-        radial-gradient(12px 12px at 30% 30%, rgba(255,255,255,.16), transparent 60%),
-        radial-gradient(18px 18px at 60% 60%, rgba(215,181,109,.28), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding: 14px 14px;
+      border:1px solid var(--stroke2);
+      border-radius: var(--r-xl);
+      background: linear-gradient(180deg, rgba(10,12,18,.62), rgba(10,12,18,.36));
+      backdrop-filter: blur(14px);
       box-shadow: var(--shadow2);
     }
-    .titleblock h1{
-      margin:0;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.78);
-    }
-    .titleblock .sub{margin-top:3px;font-size:12px;color:var(--muted);letter-spacing:.02em;}
 
-    .pillrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;}
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:9px 12px;border-radius:999px;
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      box-shadow: 0 8px 18px rgba(0,0,0,.25);
-      color: rgba(255,255,255,.76);
-      font-size:12px;text-decoration:none;user-select:none;white-space:nowrap;
-      backdrop-filter: blur(10px);
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
     }
-    .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px rgba(69,212,131,.35);}
-    .pill.gold{
-      color: rgba(255,255,255,.88);
-      border-color: rgba(215,181,109,.30);
-      background: linear-gradient(180deg, rgba(215,181,109,.14), rgba(255,255,255,.03));
-    }
-    .pill:hover{border-color:rgba(255,255,255,.16);transform:translateY(-1px);}
-
-    .hero{
-      border-radius:var(--r2);
-      border:1px solid rgba(255,255,255,.12);
+    .sigil{
+      width:42px;height:42px;
+      border-radius: 14px;
+      border:1px solid rgba(214,175,82,.28);
       background:
-        radial-gradient(900px 450px at 20% 0%, rgba(215,181,109,.18), transparent 60%),
-        radial-gradient(700px 450px at 90% 0%, rgba(255,255,255,.05), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      box-shadow:var(--shadow);
-      padding:18px 18px 14px;
+        radial-gradient(closest-side, rgba(214,175,82,.12), transparent 70%),
+        url("./apex-sigil.png") center/cover no-repeat,
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      box-shadow: 0 10px 30px rgba(214,175,82,.08);
       position:relative;
       overflow:hidden;
-      backdrop-filter: blur(14px);
     }
-    .hero h2{
-      margin:8px 0 8px;
-      font-size:44px;line-height:1.06;letter-spacing:-.02em;
-      text-shadow: 0 18px 60px rgba(0,0,0,.45);
+    .sigil:after{
+      content:"";
+      position:absolute; inset:-40% -60%;
+      background: linear-gradient(115deg, transparent 20%, rgba(214,175,82,.18), transparent 55%);
+      transform: rotate(8deg);
+      opacity:.8;
     }
-    .hero p{margin:0;max-width:80ch;color:var(--muted);font-size:14px;line-height:1.55;}
-
-    .kvs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
-    .kv{
-      display:flex;align-items:center;gap:10px;
-      padding:10px 12px;border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.20);
-      min-width:220px;flex:1;
-      backdrop-filter: blur(12px);
+    .brand h1{
+      margin:0;
+      font-size: 15px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      font-weight:700;
+      white-space:nowrap;
     }
-    .kv .k{color:rgba(255,255,255,.55);font-size:12px}
-    .kv .v{font-weight:700;letter-spacing:.01em}
-    .kv .chip{margin-left:auto;font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.75);opacity:.92}
-
-    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-top:14px;}
-    @media (max-width:920px){.grid{grid-template-columns:1fr}.hero h2{font-size:36px}.pillrow{justify-content:flex-start}}
-
-    .panel{
-      border-radius:var(--r2);
-      border:1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-      box-shadow:var(--shadow2);
-      padding:14px;
-      backdrop-filter: blur(14px);
+    .brand p{
+      margin:3px 0 0;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:60vw;
     }
 
-    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px;}
-    .input,.select,.btn{
-      border-radius:16px;border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
-      color: rgba(255,255,255,.86);
-      padding:12px 12px;outline:none;
-      box-shadow:0 12px 24px rgba(0,0,0,.25);
-      backdrop-filter: blur(12px);
-    }
-    .input{flex:1;min-width:220px}
-    .select{min-width:160px}
-    .btn{
-      cursor:pointer;user-select:none;
-      padding:12px 14px;display:inline-flex;align-items:center;gap:10px;
-      font-weight:700;letter-spacing:.01em;
-    }
-    .btn.gold{
-      border-color: rgba(215,181,109,.35);
-      background: linear-gradient(180deg, rgba(215,181,109,.16), rgba(0,0,0,.22));
-    }
-    .btn:hover{transform:translateY(-1px)}
-    .btn:active{transform:translateY(0px)}
-
-    .warnbox{
-      margin-top:12px;border-radius:var(--r2);
-      border:1px solid rgba(215,181,109,.25);
-      background: linear-gradient(180deg, rgba(215,181,109,.10), rgba(0,0,0,.22));
-      padding:12px 14px;color:rgba(255,255,255,.78);
-      font-size:12px;line-height:1.45;
-      backdrop-filter: blur(14px);
-    }
-    .hidden{display:none !important}
-
-    .list{margin-top:14px;display:grid;gap:10px;}
-    .card{
-      border-radius:var(--r2);
-      border:1px solid rgba(255,255,255,.10);
-      background:
-        radial-gradient(600px 240px at 15% 0%, rgba(215,181,109,.12), transparent 55%),
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      box-shadow:var(--shadow2);
-      padding:14px;
-      display:flex;gap:12px;align-items:flex-start;justify-content:space-between;
-      backdrop-filter: blur(14px);
-    }
-    .card:hover{border-color:rgba(255,255,255,.16);transform:translateY(-1px);}
-
-    .left{min-width:0;flex:1;}
-    .idrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
-    .id{
-      font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.80);
-      padding:7px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.24);
+    .pillrow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
     .status{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:7px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      color: rgba(255,255,255,.78);font-size:12px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(10,12,18,.35);
+      backdrop-filter: blur(10px);
+      font-size:12px;
+      color:var(--muted);
     }
-    .status .sdot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 12px rgba(255,204,102,.22);}
-    .status.ok .sdot{background:var(--ok);box-shadow:0 0 12px rgba(69,212,131,.22);}
-    .status.bad .sdot{background:var(--bad);box-shadow:0 0 12px rgba(255,93,108,.22);}
-
-    .entity{font-size:22px;font-weight:780;margin:2px 0 6px;letter-spacing:-.01em;}
-    .meta{display:flex;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:12px;margin-bottom:10px;}
-    .tagrow{display:flex;flex-wrap:wrap;gap:8px;}
-    .tag{
-      font-size:12px;padding:7px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
-      color: rgba(255,255,255,.72);
+    .dot{
+      width:8px;height:8px;
+      border-radius:50%;
+      background: var(--good);
+      box-shadow: 0 0 0 4px rgba(88,255,171,.10);
     }
 
-    .right{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start;min-width:180px;}
-    .smallbtn{
-      text-decoration:none;cursor:pointer;user-select:none;
-      display:inline-flex;align-items:center;gap:8px;
-      padding:10px 12px;border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
+    .btn{
+      appearance:none;
+      border:1px solid rgba(214,175,82,.30);
+      background: linear-gradient(180deg, rgba(214,175,82,.14), rgba(214,175,82,.06));
+      color: rgba(255,255,255,.92);
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-weight:650;
+      letter-spacing:.02em;
+      font-size:12px;
+      cursor:pointer;
+      transition: transform .08s ease, border-color .18s ease, background .18s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(214,175,82,.55); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+
+    .btn.ghost{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,12,18,.25);
+      color: rgba(255,255,255,.80);
+    }
+    .btn.ghost:hover{ border-color: rgba(255,255,255,.18); }
+
+    .hero{
+      margin-top: 18px;
+      border-radius: 28px;
+      border:1px solid rgba(255,255,255,.09);
+      background: linear-gradient(180deg, rgba(10,12,18,.55), rgba(10,12,18,.28));
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute; inset:-1px;
+      border-radius: 28px;
+      padding:1px;
+      background: linear-gradient(135deg, rgba(214,175,82,.28), rgba(255,255,255,.10), rgba(214,175,82,.18));
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events:none;
+      opacity:.65;
+    }
+
+    .heroInner{ padding: 22px 18px 18px; }
+    .big{
+      font-size: clamp(34px, 7vw, 54px);
+      line-height: 1.02;
+      margin:0 0 10px;
+      letter-spacing:-.02em;
+    }
+    .sub{
+      margin:0 0 14px;
+      color: var(--muted);
+      max-width: 64ch;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .metaGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+      margin-top: 14px;
+    }
+    .metaCard{
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(10,12,18,.28);
+      padding: 12px 12px;
+      min-height: 74px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:5px;
+    }
+    .metaCard .k{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color: var(--faint); }
+    .metaCard .v{ font-size:14px; font-weight:700; }
+    .metaCard .tag{ margin-left:auto; font-size:12px; color: var(--muted); }
+
+    .tools{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 14px;
+    }
+
+    .panel{
+      margin-top: 14px;
+      border-radius: 26px;
+      border:1px solid rgba(255,255,255,.09);
+      background: linear-gradient(180deg, rgba(10,12,18,.48), rgba(10,12,18,.24));
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    .panelHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+    }
+    .panelHeader h2{
+      margin:0;
+      font-size: 13px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
       color: rgba(255,255,255,.86);
-      font-size:12px;font-weight:750;
-      box-shadow:0 12px 24px rgba(0,0,0,.20);
-      backdrop-filter: blur(12px);
     }
-    .smallbtn.gold{
-      border-color: rgba(215,181,109,.35);
-      background: linear-gradient(180deg, rgba(215,181,109,.14), rgba(0,0,0,.22));
-    }
-    .smallbtn:hover{transform:translateY(-1px)}
-    .smallbtn:active{transform:translateY(0px)}
 
-    .foot{
-      margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;
-      align-items:center;justify-content:space-between;color:var(--faint);font-size:12px;
+    .searchRow{
+      padding: 12px 16px 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
     }
-    .mono{font-family:var(--mono)}
+    .input{
+      flex: 1 1 260px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,12,18,.25);
+      padding: 10px 12px;
+      min-width: 220px;
+    }
+    .input input{
+      width:100%;
+      border:0;
+      outline:none;
+      background: transparent;
+      color: rgba(255,255,255,.88);
+      font-size: 13px;
+    }
+    .select{
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,12,18,.25);
+      padding: 10px 12px;
+      color: rgba(255,255,255,.82);
+      font-size: 13px;
+      outline:none;
+    }
+
+    .list{ padding: 0 10px 12px; }
+
+    .card{
+      border-radius: 22px;
+      border:1px solid rgba(255,255,255,.09);
+      background: rgba(10,12,18,.26);
+      backdrop-filter: blur(14px);
+      padding: 14px 14px;
+      margin: 10px 6px;
+      box-shadow: 0 14px 35px rgba(0,0,0,.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .card:before{
+      content:"";
+      position:absolute; inset:-60% -60% auto -60%;
+      height:140%;
+      background: radial-gradient(closest-side, rgba(214,175,82,.10), transparent 70%);
+      opacity:.55;
+      pointer-events:none;
+      filter: blur(1px);
+    }
+    .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      position:relative;
+      z-index:1;
+    }
+    .idchip{
+      font-size: 12px;
+      letter-spacing:.08em;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,12,18,.22);
+      color: rgba(255,255,255,.80);
+      white-space:nowrap;
+    }
+    .badge{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,12,18,.22);
+      color: rgba(255,255,255,.72);
+      white-space:nowrap;
+    }
+    .badge .bDot{
+      width:8px;height:8px;border-radius:50%;
+      background: rgba(150,170,255,.85);
+      box-shadow: 0 0 0 4px rgba(150,170,255,.10);
+    }
+
+    .title{
+      margin: 10px 0 6px;
+      font-size: 24px;
+      letter-spacing:-.01em;
+      line-height:1.15;
+      position:relative;
+      z-index:1;
+    }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top: 8px;
+      position:relative;
+      z-index:1;
+    }
+    .chip{
+      font-size:12px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,12,18,.18);
+      color: rgba(255,255,255,.70);
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:1;
+    }
+
+    .footer{
+      margin-top: 16px;
+      color: rgba(255,255,255,.45);
+      font-size: 12px;
+      text-align:center;
+    }
+
+    @media (max-width: 860px){
+      .metaGrid{ grid-template-columns: 1fr; }
+      .brand p{ max-width: 46vw; }
+      .big{ letter-spacing:-.03em; }
+    }
   </style>
 </head>
 
 <body>
-  <!-- Motion layer -->
   <canvas id="fx"></canvas>
+  <div class="haze"></div>
 
-  <!-- APEX logo always in background -->
-  <div id="apexMark" aria-hidden="true">
-    <!-- Inline APEX mark (no external file needed) -->
-    <svg viewBox="0 0 1200 650" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#d7b56d" stop-opacity="0.85"/>
-          <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.18"/>
-          <stop offset="1" stop-color="#b8923a" stop-opacity="0.75"/>
-        </linearGradient>
-        <radialGradient id="rg" cx="50%" cy="45%" r="65%">
-          <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
-          <stop offset="1" stop-color="#000000" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
-
-      <!-- subtle halo -->
-      <circle cx="600" cy="300" r="260" fill="url(#rg)"/>
-
-      <!-- stylized APEX word -->
-      <g fill="none" stroke="url(#g)" stroke-width="18" stroke-linejoin="round" stroke-linecap="round" opacity="0.95">
-        <!-- A -->
-        <path d="M140 520 L250 180 L360 520"/>
-        <path d="M190 380 H310"/>
-        <!-- P -->
-        <path d="M410 520 V180"/>
-        <path d="M410 180 H560 Q640 180 640 260 Q640 340 560 340 H410"/>
-        <!-- E -->
-        <path d="M720 180 V520"/>
-        <path d="M720 180 H900"/>
-        <path d="M720 350 H860"/>
-        <path d="M720 520 H900"/>
-        <!-- X -->
-        <path d="M960 180 L1120 520"/>
-        <path d="M1120 180 L960 520"/>
-      </g>
-
-      <!-- central flare -->
-      <g opacity="0.20">
-        <path d="M600 80 V580" stroke="#d7b56d" stroke-width="6"/>
-        <path d="M430 300 H770" stroke="#ffffff" stroke-width="2"/>
-      </g>
-    </svg>
-  </div>
-
-  <div id="haze"></div>
+  <!-- BIG WATERMARK (apex-sigil.png) -->
+  <div class="watermark"><div class="mark"></div></div>
 
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
-        <div class="orb"></div>
-        <div class="titleblock">
+        <div class="sigil" title="APEX"></div>
+        <div style="min-width:0">
           <h1>APEX-ATA LEDGER</h1>
-          <div class="sub">Public registry • append-only • citeable IDs</div>
+          <p>Public registry • append-only • citeable IDs</p>
         </div>
       </div>
 
       <div class="pillrow">
-        <a class="pill" href="#" onclick="return false;">
-          <span class="dot" id="statusDot"></span>
+        <div class="status" id="statusPill">
+          <span class="dot"></span>
           <span id="statusText">READY</span>
-          <span class="mono" id="clockText"></span>
-        </a>
-        <a class="pill gold" id="repoLink" target="_blank" rel="noreferrer">REPO</a>
-        <a class="pill gold" href="#registry">REGISTRY</a>
-        <a class="pill gold" href="#verify">VERIFIER</a>
+          <span style="opacity:.55">•</span>
+          <span id="timeText"></span>
+        </div>
+        <button class="btn ghost" onclick="goRepo()">REPO</button>
+        <button class="btn ghost" onclick="goRegistry()">REGISTRY</button>
+        <button class="btn" onclick="goVerifier()">VERIFIER</button>
       </div>
     </div>
 
     <section class="hero">
-      <h2>Authority you can cite.<br/>Evidence you can anchor.</h2>
-      <p>
-        This is the public face of the <b>APEX-ATA Ledger</b>: an append-only registry of attestations.
-        Each entry has a stable ID and a source pointer. Commit history is the canonical timestamp.
-      </p>
+      <div class="heroInner">
+        <h2 class="big">Authority you can cite.<br/>Evidence you can anchor.</h2>
+        <p class="sub">
+          This is the public face of the <b>APEX-ATA Ledger</b>: an append-only registry of records, verdicts, and attestations.
+          Each entry has a stable ID and a source pointer. Commit history is the canonical timestamp.
+        </p>
 
-      <div class="kvs">
-        <div class="kv">
-          <div>
+        <div class="metaGrid">
+          <div class="metaCard">
             <div class="k">Mode</div>
-            <div class="v">Registry</div>
+            <div class="v">Registry <span class="tag" id="modeTag">live</span></div>
           </div>
-          <div class="chip" id="modeChip">live</div>
-        </div>
-        <div class="kv">
-          <div>
+          <div class="metaCard">
             <div class="k">Format</div>
-            <div class="v">Machine-readable</div>
+            <div class="v">Machine-readable <span class="tag">JSON</span></div>
           </div>
-          <div class="chip mono">JSON</div>
-        </div>
-        <div class="kv">
-          <div>
+          <div class="metaCard">
             <div class="k">Integrity</div>
-            <div class="v">Append-only discipline</div>
-          </div>
-          <div class="chip mono">git</div>
-        </div>
-      </div>
-
-      <div class="grid">
-        <div class="panel" id="registry">
-          <div class="controls">
-            <input id="q" class="input" placeholder="Search: Meta, NVIDIA, ATA-2026-0005, AI, compute…"/>
-            <select id="statusFilter" class="select">
-              <option value="all">Status: All</option>
-              <option value="unverified">Unverified</option>
-              <option value="verified">Verified</option>
-              <option value="flagged">Flagged</option>
-            </select>
-            <button class="btn gold" id="copyPattern">Copy citation pattern</button>
-          </div>
-
-          <div class="warnbox hidden" id="demoBox">
-            <b>Registry status:</b> Demo mode. Add <span class="mono">/registry/index.json</span> to go live.
-          </div>
-
-          <div class="list" id="list"></div>
-
-          <div class="foot">
-            <div>Entries: <b id="count">0</b> <span class="muted">• Updated:</span> <span id="updated">—</span></div>
-            <div class="mono" id="citePattern">APEX-ATA • ATA-YYYY-NNNN</div>
+            <div class="v">Append-only discipline <span class="tag">git</span></div>
           </div>
         </div>
 
-        <div class="panel" id="verify">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <div>
-              <div style="font-weight:850;letter-spacing:.02em;">Verifier (simple mode)</div>
-              <div class="muted" style="font-size:12px;margin-top:4px;">
-                Jump to an entry ID. Wire deeper verification later.
-              </div>
-            </div>
-          </div>
-
-          <div class="controls" style="margin-top:12px;">
-            <input id="jumpId" class="input" placeholder="ID  e.g. ATA-2026-0005"/>
-            <button class="btn gold" id="jumpBtn">Jump</button>
-            <a class="btn" href="./verifier/" target="_blank" rel="noreferrer">Open Verifier</a>
-          </div>
-
-          <div class="warnbox" style="margin-top:12px;">
-            Public posture: registry records only • no private data • audit-ready • linkable.
-          </div>
+        <div class="tools">
+          <button class="btn" onclick="scrollToPanel()">Enter Registry</button>
+          <button class="btn ghost" onclick="togglePurpose()">Purpose</button>
+          <button class="btn ghost" onclick="goVerifier()">Verify</button>
+          <button class="btn" onclick="copyCitationPattern()">Copy citation pattern</button>
         </div>
       </div>
     </section>
+
+    <section class="panel" id="panel">
+      <div class="panelHeader">
+        <h2>Registry</h2>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <span style="font-size:12px; color:rgba(255,255,255,.55)" id="countText">Loading…</span>
+        </div>
+      </div>
+
+      <div class="searchRow">
+        <div class="input">
+          <span style="opacity:.55">⌕</span>
+          <input id="q" placeholder="Search: company, ID, sector, tags…" oninput="render()" />
+        </div>
+        <select class="select" id="statusFilter" onchange="render()">
+          <option value="all">Status: All</option>
+          <option value="unverified">Unverified</option>
+          <option value="verified">Verified</option>
+        </select>
+        <button class="btn" onclick="copyCitationPattern()">Copy citation pattern</button>
+      </div>
+
+      <div class="list" id="list"></div>
+    </section>
+
+    <div class="footer">
+      Tip: add <b>/registry/index.json</b> to make this fully live. If missing, the site runs a safe demo.
+    </div>
   </div>
 
-  <script>
-    // === Clock ===
-    const clockText = document.getElementById("clockText");
-    function tick(){
-      const d = new Date();
-      const pad = n => String(n).padStart(2,"0");
-      clockText.textContent = `• ${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+<script>
+  const DEMO = {
+    updated: new Date().toISOString().slice(0,10),
+    entries: [
+      { id:"ATA-2026-0001", title:"BHP Group", status:"unverified", tags:["Public Company","Australia (Primary)","Global Operations","Resources","Infrastructure"], source:"" },
+      { id:"ATA-2026-0005", title:"Meta Platforms, Inc.", status:"unverified", tags:["Public Company","United States (Primary)","Global Operations","AI","Compute","Infrastructure"], source:"" },
+      { id:"ATA-2026-0007", title:"NVIDIA Corporation", status:"unverified", tags:["Public Company","United States (Primary)","Global Operations","AI","Semiconductors","Data Center"], source:"" }
+    ]
+  };
+
+  let DATA = null;
+
+  function nowStamp(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function setTime(){
+    document.getElementById("timeText").textContent = nowStamp();
+  }
+  setTime();
+  setInterval(setTime, 15000);
+
+  async function load(){
+    try{
+      const res = await fetch("./registry/index.json", { cache:"no-store" });
+      if(!res.ok) throw new Error("no registry");
+      const j = await res.json();
+      if(!j || !Array.isArray(j.entries)) throw new Error("bad registry");
+      DATA = j;
+      document.getElementById("modeTag").textContent = "live";
+    }catch(e){
+      DATA = DEMO;
+      document.getElementById("modeTag").textContent = "demo";
     }
-    tick(); setInterval(tick, 15000);
+    render();
+  }
+  load();
 
-    // Set repo link (edit if needed)
-    document.getElementById("repoLink").href = "https://github.com/apex-architecture/apex-ata";
+  function norm(s){ return (s||"").toString().toLowerCase(); }
 
-    // === Registry load ===
-    const demoBox = document.getElementById("demoBox");
-    const modeChip = document.getElementById("modeChip");
-    const listEl = document.getElementById("list");
-    const countEl = document.getElementById("count");
-    const updatedEl = document.getElementById("updated");
-    const citePatternEl = document.getElementById("citePattern");
+  function render(){
+    const list = document.getElementById("list");
+    const q = norm(document.getElementById("q").value);
+    const sf = document.getElementById("statusFilter").value;
 
-    const demoData = {
-      registry:"APEX-ATA",
-      status:"demo",
-      updated:new Date().toISOString().slice(0,10),
-      citation_pattern:"APEX-ATA • ATA-YYYY-NNNN",
-      entries:[
-        {id:"ATA-2026-0001", entity:"BHP Group", type:"Public Company", primary_jurisdiction:"Australia", operations:"Global", sector:["Resources","Infrastructure"], status:"Unverified", source:"https://www.bhp.com"},
-        {id:"ATA-2026-0005", entity:"Meta Platforms, Inc.", type:"Public Company", primary_jurisdiction:"United States", operations:"Global", sector:["AI","Compute","Infrastructure"], status:"Unverified", source:"https://about.meta.com"},
-        {id:"ATA-2026-0007", entity:"NVIDIA Corporation", type:"Public Company", primary_jurisdiction:"United States", operations:"Global", sector:["Semiconductors","AI","Data Center"], status:"Unverified", source:"https://www.nvidia.com"}
-      ]
-    };
+    const entries = (DATA?.entries || []).filter(e=>{
+      if(sf !== "all" && norm(e.status) !== sf) return false;
+      if(!q) return true;
+      const hay = [
+        e.id, e.title, e.status,
+        ...(e.tags || [])
+      ].map(norm).join(" | ");
+      return hay.includes(q);
+    });
 
-    let REG = null;
+    document.getElementById("countText").textContent = `Entries: ${entries.length} • Updated: ${(DATA?.updated)||DEMO.updated}`;
 
-    async function loadRegistry(){
-      try{
-        const res = await fetch("./registry/index.json", { cache:"no-store" });
-        if(!res.ok) throw new Error("missing registry/index.json");
-        REG = await res.json();
-        demoBox.classList.add("hidden");
-        modeChip.textContent = "live";
-      }catch(e){
-        REG = demoData;
-        demoBox.classList.remove("hidden");
-        modeChip.textContent = "demo";
-      }
-      render();
+    list.innerHTML = entries.map(e=>{
+      const statusDot = (norm(e.status)==="verified") ? "rgba(88,255,171,.9)" : "rgba(150,170,255,.85)";
+      const statusRing = (norm(e.status)==="verified") ? "rgba(88,255,171,.10)" : "rgba(150,170,255,.10)";
+      const statusLabel = (norm(e.status)==="verified") ? "Verified" : "Unverified";
+
+      const chips = (e.tags || []).slice(0,12).map(t=>`<span class="chip">${escapeHtml(t)}</span>`).join("");
+
+      return `
+        <div class="card">
+          <div class="row">
+            <div class="idchip">${escapeHtml(e.id || "ATA-YYYY-NNNN")}</div>
+            <div class="badge" title="Status">
+              <span class="bDot" style="background:${statusDot}; box-shadow:0 0 0 4px ${statusRing}"></span>
+              ${statusLabel}
+            </div>
+          </div>
+
+          <div class="title">${escapeHtml(e.title || "Untitled Entry")}</div>
+
+          <div class="meta">
+            ${chips || `<span class="chip">Machine-readable</span><span class="chip">Append-only</span>`}
+          </div>
+
+          <div class="actions">
+            <button class="btn" onclick="copyCitation('${escapeJs(e.id)}')">Copy citation</button>
+            <button class="btn ghost" onclick="openSource('${escapeJs(e.source||"")}')">Source</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    if(entries.length === 0){
+      list.innerHTML = `
+        <div class="card" style="text-align:center">
+          <div class="title" style="font-size:18px">No matches</div>
+          <div style="color:rgba(255,255,255,.62)">Try a different query or set Status: All.</div>
+        </div>
+      `;
     }
+  }
 
-    function norm(s){ return (s||"").toString().toLowerCase(); }
-    function statusClass(s){
-      const v = norm(s);
-      if(v.includes("verified")) return "ok";
-      if(v.includes("flag") || v.includes("risk")) return "bad";
-      return "";
+  function copyCitationPattern(){
+    const pattern = `APEX-ATA • ATA-YYYY-NNNN • /registry/ATA-YYYY-NNNN.json • commit-link`;
+    navigator.clipboard?.writeText(pattern);
+    pulse("Citation pattern copied");
+  }
+
+  function copyCitation(id){
+    const repoBase = location.origin + location.pathname.replace(/\/+$/, "");
+    const citation = `APEX-ATA • ${id} • ${repoBase}/registry/${id}.json • commit-link`;
+    navigator.clipboard?.writeText(citation);
+    pulse("Citation copied");
+  }
+
+  function openSource(url){
+    if(url && url.trim()){
+      window.open(url, "_blank", "noopener,noreferrer");
+    }else{
+      pulse("No source link yet");
     }
+  }
 
-    function makeCard(entry){
-      const id = entry.id || "ATA-YYYY-NNNN";
-      const entity = entry.entity || "Unknown Entity";
-      const type = entry.type || "—";
-      const juris = entry.primary_jurisdiction || "—";
-      const ops = entry.operations || "—";
-      const status = entry.status || "Unverified";
-      const sectors = Array.isArray(entry.sector) ? entry.sector : [];
-      const src = entry.source || "";
+  function togglePurpose(){
+    alert(
+`APEX-ATA exists to make claims citeable.
 
-      const card = document.createElement("div");
-      card.className = "card";
-      card.id = id;
+• Stable IDs per entry
+• Machine-readable record format
+• Source pointer per entry
+• Git commit history as canonical timestamp
 
-      const left = document.createElement("div");
-      left.className = "left";
+Add /registry/index.json and individual /registry/ATA-*.json files to go fully live.`
+    );
+  }
 
-      const idrow = document.createElement("div");
-      idrow.className = "idrow";
+  function scrollToPanel(){
+    document.getElementById("panel").scrollIntoView({ behavior:"smooth", block:"start" });
+  }
 
-      const idpill = document.createElement("div");
-      idpill.className = "id";
-      idpill.textContent = id;
+  function goRepo(){
+    window.open("https://github.com/apex-architecture/apex-ata", "_blank", "noopener,noreferrer");
+  }
+  function goRegistry(){ scrollToPanel(); }
+  function goVerifier(){
+    window.location.href = "./verifier/";
+  }
 
-      const st = document.createElement("div");
-      st.className = "status " + statusClass(status);
-      st.innerHTML = `<span class="sdot"></span><span>${status}</span>`;
+  function pulse(msg){
+    const pill = document.getElementById("statusPill");
+    const old = document.getElementById("statusText").textContent;
+    document.getElementById("statusText").textContent = msg.toUpperCase();
+    pill.style.borderColor = "rgba(214,175,82,.55)";
+    setTimeout(()=>{ pill.style.borderColor = "rgba(255,255,255,.08)"; }, 450);
+    setTimeout(()=>{ document.getElementById("statusText").textContent = old; }, 1200);
+  }
 
-      const h = document.createElement("div");
-      h.className = "entity";
-      h.textContent = entity;
+  function escapeHtml(s){
+    return (s||"").toString().replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
+  }
+  function escapeJs(s){
+    return (s||"").toString().replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+  }
 
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = `${type} • ${juris} (Primary), ${ops} Operations`;
-
-      const tagrow = document.createElement("div");
-      tagrow.className = "tagrow";
-      sectors.forEach(t=>{
-        const tag = document.createElement("div");
-        tag.className = "tag";
-        tag.textContent = t;
-        tagrow.appendChild(tag);
-      });
-
-      idrow.appendChild(idpill);
-      idrow.appendChild(st);
-
-      left.appendChild(idrow);
-      left.appendChild(h);
-      left.appendChild(meta);
-      left.appendChild(tagrow);
-
-      const right = document.createElement("div");
-      right.className = "right";
-
-      const citeBtn = document.createElement("button");
-      citeBtn.className = "smallbtn gold";
-      citeBtn.textContent = "Copy citation";
-      citeBtn.onclick = () => copyCitationFor(entry);
-
-      const srcBtn = document.createElement("a");
-      srcBtn.className = "smallbtn";
-      srcBtn.textContent = "Source";
-      srcBtn.href = src || "#";
-      srcBtn.target = "_blank";
-      srcBtn.rel = "noreferrer";
-      if(!src) srcBtn.onclick = (ev)=>ev.preventDefault();
-
-      right.appendChild(citeBtn);
-      right.appendChild(srcBtn);
-
-      card.appendChild(left);
-      card.appendChild(right);
-
-      return card;
-    }
-
-    function render(){
-      const q = norm(document.getElementById("q").value);
-      const sf = document.getElementById("statusFilter").value;
-      const entries = (REG && Array.isArray(REG.entries)) ? REG.entries : [];
-
-      const filtered = entries.filter(e=>{
-        const hay = [
-          e.id, e.entity, e.type, e.primary_jurisdiction, e.operations,
-          ...(Array.isArray(e.sector)? e.sector : []),
-          e.status
-        ].map(norm).join(" ");
-        const matchesQ = !q || hay.includes(q);
-
-        const st = norm(e.status);
-        const matchesS =
-          sf === "all" ||
-          (sf === "unverified" && st.includes("unverified")) ||
-          (sf === "verified" && st.includes("verified")) ||
-          (sf === "flagged" && (st.includes("flag") || st.includes("risk")));
-
-        return matchesQ && matchesS;
-      });
-
-      listEl.innerHTML = "";
-      filtered.forEach(e => listEl.appendChild(makeCard(e)));
-
-      countEl.textContent = String(filtered.length);
-      updatedEl.textContent = (REG.updated || "—");
-      citePatternEl.textContent = (REG.citation_pattern || "APEX-ATA • ATA-YYYY-NNNN");
-    }
-
-    document.getElementById("q").addEventListener("input", render);
-    document.getElementById("statusFilter").addEventListener("change", render);
-
-    async function copyToClipboard(text){
-      try{ await navigator.clipboard.writeText(text); pulse("COPIED"); }
-      catch{
-        const ta=document.createElement("textarea");
-        ta.value=text; document.body.appendChild(ta);
-        ta.select(); document.execCommand("copy"); ta.remove();
-        pulse("COPIED");
-      }
-    }
-
-    function copyCitationFor(entry){
-      const id = entry.id || "ATA-YYYY-NNNN";
-      const base = location.origin + location.pathname.replace(/\/[^\/]*$/, "/");
-      const citation = `APEX-ATA • ${id} • ${base}registry/index.json • commit=git-history` + (entry.source?` • Source: ${entry.source}`:"");
-      copyToClipboard(citation);
-    }
-
-    document.getElementById("copyPattern").onclick = () => {
-      copyToClipboard((REG && REG.citation_pattern) ? REG.citation_pattern : "APEX-ATA • ATA-YYYY-NNNN");
-    };
-
-    document.getElementById("jumpBtn").onclick = () => {
-      const v=(document.getElementById("jumpId").value||"").trim();
-      if(!v) return;
-      const el=document.getElementById(v);
-      if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
-      pulse("JUMP");
-    };
-
-    // Status pulse
-    const statusText=document.getElementById("statusText");
-    const statusDot=document.getElementById("statusDot");
-    function pulse(t){
-      statusText.textContent=t;
-      setTimeout(()=>statusText.textContent="READY", 1100);
-    }
-
-    // === APEX Motion Particles (Canvas) ===
-    const canvas = document.getElementById("fx");
-    const ctx = canvas.getContext("2d", { alpha:true });
-
+  /* Particle field */
+  (function(){
+    const c = document.getElementById("fx");
+    const ctx = c.getContext("2d", { alpha:true });
     let W=0,H=0, DPR=1;
-    function resize(){
-      DPR = Math.min(2, window.devicePixelRatio || 1);
-      W = Math.floor(window.innerWidth);
-      H = Math.floor(window.innerHeight);
-      canvas.width = Math.floor(W * DPR);
-      canvas.height = Math.floor(H * DPR);
-      canvas.style.width = W + "px";
-      canvas.style.height = H + "px";
-      ctx.setTransform(DPR,0,0,DPR,0,0);
-    }
-    window.addEventListener("resize", resize, {passive:true});
-    resize();
 
-    // Particle system tuned for "APEX Watchtower vibe"
-    const N = Math.floor(Math.min(140, Math.max(70, (W*H)/14000)));
+    const N = 90;
     const pts = [];
-    const rnd = (a,b)=>a + Math.random()*(b-a);
+    const rand = (a,b)=> a + Math.random()*(b-a);
+
+    function resize(){
+      DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      W = c.width = Math.floor(innerWidth * DPR);
+      H = c.height = Math.floor(innerHeight * DPR);
+      c.style.width = innerWidth+"px";
+      c.style.height = innerHeight+"px";
+    }
+    window.addEventListener("resize", resize, { passive:true });
+    resize();
 
     for(let i=0;i<N;i++){
       pts.push({
-        x:rnd(0,W), y:rnd(0,H),
-        vx:rnd(-0.18,0.18), vy:rnd(-0.12,0.12),
-        r:rnd(0.7, 1.9),
-        a:rnd(0.10,0.38)
+        x: rand(0,W),
+        y: rand(0,H),
+        vx: rand(-.18,.18)*DPR,
+        vy: rand(-.10,.10)*DPR,
+        r: rand(1.0,2.2)*DPR,
+        a: rand(.18,.45)
       });
     }
 
-    let mx=W*0.5, my=H*0.35;
-    window.addEventListener("pointermove", (e)=>{ mx=e.clientX; my=e.clientY; }, {passive:true});
-
-    function step(){
+    function draw(){
       ctx.clearRect(0,0,W,H);
 
-      // background dust glow
-      const g = ctx.createRadialGradient(W*0.5, H*0.85, 0, W*0.5, H*0.85, Math.max(W,H)*0.7);
-      g.addColorStop(0, "rgba(215,181,109,0.08)");
-      g.addColorStop(0.55, "rgba(255,255,255,0.02)");
-      g.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0,0,W,H);
-
-      // links
-      for(let i=0;i<N;i++){
-        const p=pts[i];
-
-        // drift + subtle mouse gravity
-        const dx = (mx - p.x);
-        const dy = (my - p.y);
-        p.vx += dx * 0.0000009;
-        p.vy += dy * 0.0000007;
-
-        p.x += p.vx; p.y += p.vy;
-
-        // wrap
-        if(p.x < -20) p.x = W+20;
-        if(p.x > W+20) p.x = -20;
-        if(p.y < -20) p.y = H+20;
-        if(p.y > H+20) p.y = -20;
-
-        // damp
-        p.vx *= 0.995;
-        p.vy *= 0.995;
+      // subtle gold grid
+      ctx.save();
+      ctx.globalAlpha = 0.08;
+      ctx.strokeStyle = "rgba(214,175,82,0.35)";
+      ctx.lineWidth = 1*DPR;
+      for(let x=0;x<W;x+=220*DPR){
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
       }
+      for(let y=0;y<H;y+=220*DPR){
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+      }
+      ctx.restore();
 
-      // draw links and nodes
+      // connections
       for(let i=0;i<N;i++){
-        const a=pts[i];
+        const p = pts[i];
+        p.x += p.vx; p.y += p.vy;
+        if(p.x<0) p.x=W; if(p.x>W) p.x=0;
+        if(p.y<0) p.y=H; if(p.y>H) p.y=0;
 
         for(let j=i+1;j<N;j++){
-          const b=pts[j];
-          const dx=a.x-b.x, dy=a.y-b.y;
-          const d2=dx*dx+dy*dy;
-
-          const maxD = 140; // link distance
-          if(d2 < maxD*maxD){
-            const d = Math.sqrt(d2);
-            const t = 1 - (d/maxD);
-
-            // gold-ish link, very subtle
-            ctx.strokeStyle = `rgba(215,181,109,${0.10 * t})`;
-            ctx.lineWidth = 1;
+          const q = pts[j];
+          const dx = p.x-q.x, dy=p.y-q.y;
+          const d2 = dx*dx+dy*dy;
+          const max = (170*DPR)*(170*DPR);
+          if(d2<max){
+            const t = 1 - (d2/max);
+            ctx.globalAlpha = 0.18 * t;
+            ctx.strokeStyle = "rgba(214,175,82,0.55)";
+            ctx.lineWidth = (1.0*DPR) * t;
             ctx.beginPath();
-            ctx.moveTo(a.x,a.y);
-            ctx.lineTo(b.x,b.y);
+            ctx.moveTo(p.x,p.y);
+            ctx.lineTo(q.x,q.y);
             ctx.stroke();
           }
         }
-
-        // node
-        ctx.fillStyle = `rgba(255,255,255,${a.a})`;
-        ctx.beginPath();
-        ctx.arc(a.x,a.y,a.r,0,Math.PI*2);
-        ctx.fill();
-
-        // tiny gold sparkle occasionally
-        if(Math.random() < 0.003){
-          ctx.fillStyle = "rgba(215,181,109,0.55)";
-          ctx.beginPath();
-          ctx.arc(a.x,a.y,a.r*1.7,0,Math.PI*2);
-          ctx.fill();
-        }
       }
 
-      requestAnimationFrame(step);
-    }
-    step();
+      // points + halos
+      for(const p of pts){
+        ctx.globalAlpha = p.a;
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
 
-    // Boot registry
-    loadRegistry();
-  </script>
+        ctx.globalAlpha = p.a * 0.35;
+        ctx.fillStyle = "rgba(214,175,82,0.75)";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r*2.2,0,Math.PI*2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+</script>
+
 </body>
 </html>
