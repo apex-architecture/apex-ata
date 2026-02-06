@@ -1,31 +1,31 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>APEX-ATA Ledger</title>
-  <meta name="description" content="Public, append-only registry of attestations with citeable IDs. Commit history is the canonical timestamp." />
-  <meta name="theme-color" content="#0b0f16" />
+  <meta name="description" content="Authority you can cite. Evidence you can anchor."/>
+  <meta name="theme-color" content="#070a10"/>
 
   <style>
     :root{
-      --bg0:#070a10;
-      --bg1:#0b0f16;
-      --card: rgba(255,255,255,.06);
-      --card2: rgba(255,255,255,.04);
-      --line: rgba(255,255,255,.10);
-      --text: rgba(255,255,255,.88);
-      --muted: rgba(255,255,255,.58);
+      --bg0:#05070c;
+      --bg1:#070a10;
+      --glass: rgba(255,255,255,.055);
+      --glass2: rgba(255,255,255,.035);
+      --line: rgba(255,255,255,.11);
+      --text: rgba(255,255,255,.90);
+      --muted: rgba(255,255,255,.60);
       --faint: rgba(255,255,255,.38);
-      --gold: #d7b56d;
+      --gold:#d7b56d;
       --gold2:#b8923a;
-      --ok: #45d483;
+      --ok:#45d483;
       --warn:#ffcc66;
       --bad:#ff5d6c;
-      --shadow: 0 20px 60px rgba(0,0,0,.55);
-      --shadow2: 0 10px 30px rgba(0,0,0,.45);
-      --r: 18px;
-      --r2: 26px;
+      --shadow: 0 24px 70px rgba(0,0,0,.58);
+      --shadow2: 0 12px 34px rgba(0,0,0,.46);
+      --r:18px;
+      --r2:26px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
@@ -34,58 +34,59 @@
     html,body{height:100%}
     body{
       margin:0;
-      font-family: var(--sans);
+      font-family:var(--sans);
       color:var(--text);
-      background:
-        radial-gradient(1200px 700px at 20% 10%, rgba(215,181,109,.14), transparent 55%),
-        radial-gradient(900px 600px at 80% 20%, rgba(69,212,131,.08), transparent 55%),
-        radial-gradient(900px 600px at 50% 90%, rgba(255,255,255,.05), transparent 60%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
+      background: radial-gradient(1400px 700px at 20% 10%, rgba(215,181,109,.14), transparent 55%),
+                  radial-gradient(1000px 700px at 85% 15%, rgba(255,255,255,.05), transparent 55%),
+                  linear-gradient(180deg, var(--bg0), var(--bg1));
       overflow-x:hidden;
     }
 
-    /* subtle starfield */
-    .stars:before,.stars:after{
-      content:"";
+    /* === APEX MOTION LAYERS === */
+    #fx{
       position:fixed; inset:0;
-      background-image:
-        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.20), transparent 60%),
-        radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.18), transparent 60%),
-        radial-gradient(1px 1px at 55% 40%, rgba(255,255,255,.14), transparent 60%),
-        radial-gradient(1px 1px at 80% 30%, rgba(255,255,255,.16), transparent 60%),
-        radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,.12), transparent 60%),
-        radial-gradient(1px 1px at 20% 85%, rgba(255,255,255,.10), transparent 60%);
-      opacity:.65;
-      pointer-events:none;
-      z-index:-1;
-      filter: blur(.2px);
-    }
-    .stars:after{
-      opacity:.35;
-      transform: scale(1.2);
+      z-index:-3;
+      background: radial-gradient(1200px 900px at 50% 80%, rgba(255,255,255,.03), transparent 60%);
     }
 
-    .wrap{
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 22px 16px 60px;
+    /* Big APEX logo background layer (always present) */
+    #apexMark{
+      position:fixed; inset:0;
+      z-index:-2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      opacity:.18; /* tune this if you want stronger/weaker */
+      filter: blur(0px);
+      transform: translateZ(0);
     }
+    #apexMark svg{
+      width:min(900px, 130vw);
+      height:auto;
+      opacity:.95;
+      filter: drop-shadow(0 30px 80px rgba(0,0,0,.55));
+    }
+
+    /* soft vignette + haze */
+    #haze{
+      position:fixed; inset:0;
+      z-index:-1;
+      pointer-events:none;
+      background:
+        radial-gradient(900px 600px at 30% 20%, rgba(215,181,109,.10), transparent 60%),
+        radial-gradient(900px 600px at 80% 30%, rgba(255,255,255,.05), transparent 60%),
+        radial-gradient(1200px 900px at 50% 100%, rgba(0,0,0,.65), transparent 55%);
+      mix-blend-mode: screen;
+      opacity:.85;
+    }
+
+    .wrap{max-width:1120px;margin:0 auto;padding:22px 16px 60px;}
 
     .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:14px;
-      margin-bottom:18px;
+      display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;
     }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width: 240px;
-    }
-
+    .brand{display:flex;align-items:center;gap:12px;min-width:240px;}
     .orb{
       width:34px;height:34px;border-radius:12px;
       background:
@@ -95,323 +96,233 @@
       border:1px solid rgba(255,255,255,.10);
       box-shadow: var(--shadow2);
     }
-
     .titleblock h1{
-      margin:0;
-      font-size: 14px;
-      letter-spacing:.14em;
-      text-transform:uppercase;
-      color: rgba(255,255,255,.78);
+      margin:0;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.78);
     }
-    .titleblock .sub{
-      margin-top:3px;
-      font-size:12px;
-      color: var(--muted);
-      letter-spacing:.02em;
-    }
+    .titleblock .sub{margin-top:3px;font-size:12px;color:var(--muted);letter-spacing:.02em;}
 
-    .pillrow{
-      display:flex; flex-wrap:wrap;
-      gap:8px;
-      justify-content:flex-end;
-    }
-
+    .pillrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;}
     .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:9px 12px;
-      border-radius: 999px;
+      display:inline-flex;align-items:center;gap:8px;
+      padding:9px 12px;border-radius:999px;
       background: rgba(255,255,255,.05);
       border:1px solid rgba(255,255,255,.10);
       box-shadow: 0 8px 18px rgba(0,0,0,.25);
       color: rgba(255,255,255,.76);
-      font-size:12px;
-      text-decoration:none;
-      user-select:none;
-      white-space:nowrap;
+      font-size:12px;text-decoration:none;user-select:none;white-space:nowrap;
+      backdrop-filter: blur(10px);
     }
-    .pill .dot{
-      width:8px;height:8px;border-radius:50%;
-      background: var(--ok);
-      box-shadow: 0 0 12px rgba(69,212,131,.35);
-    }
+    .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px rgba(69,212,131,.35);}
     .pill.gold{
       color: rgba(255,255,255,.88);
       border-color: rgba(215,181,109,.30);
       background: linear-gradient(180deg, rgba(215,181,109,.14), rgba(255,255,255,.03));
     }
-    .pill.gold:hover{transform: translateY(-1px)}
-    .pill:hover{
-      border-color: rgba(255,255,255,.16);
-    }
+    .pill:hover{border-color:rgba(255,255,255,.16);transform:translateY(-1px);}
 
     .hero{
-      border-radius: var(--r2);
+      border-radius:var(--r2);
       border:1px solid rgba(255,255,255,.12);
       background:
-        radial-gradient(900px 400px at 20% 0%, rgba(215,181,109,.18), transparent 60%),
-        radial-gradient(700px 400px at 90% 0%, rgba(255,255,255,.06), transparent 55%),
+        radial-gradient(900px 450px at 20% 0%, rgba(215,181,109,.18), transparent 60%),
+        radial-gradient(700px 450px at 90% 0%, rgba(255,255,255,.05), transparent 60%),
         linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      box-shadow: var(--shadow);
-      padding: 18px 18px 14px;
-      overflow:hidden;
+      box-shadow:var(--shadow);
+      padding:18px 18px 14px;
       position:relative;
+      overflow:hidden;
+      backdrop-filter: blur(14px);
     }
-
     .hero h2{
-      margin: 8px 0 8px;
-      font-size: 44px;
-      line-height:1.06;
-      letter-spacing:-.02em;
+      margin:8px 0 8px;
+      font-size:44px;line-height:1.06;letter-spacing:-.02em;
+      text-shadow: 0 18px 60px rgba(0,0,0,.45);
     }
-    .hero p{
-      margin:0;
-      max-width: 80ch;
-      color: var(--muted);
-      font-size: 14px;
-      line-height:1.55;
-    }
+    .hero p{margin:0;max-width:80ch;color:var(--muted);font-size:14px;line-height:1.55;}
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 14px;
-      margin-top: 14px;
+    .kvs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
+    .kv{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 12px;border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      min-width:220px;flex:1;
+      backdrop-filter: blur(12px);
     }
-    @media (max-width: 920px){
-      .grid{grid-template-columns:1fr}
-      .hero h2{font-size: 36px}
-      .pillrow{justify-content:flex-start}
-    }
+    .kv .k{color:rgba(255,255,255,.55);font-size:12px}
+    .kv .v{font-weight:700;letter-spacing:.01em}
+    .kv .chip{margin-left:auto;font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.75);opacity:.92}
+
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-top:14px;}
+    @media (max-width:920px){.grid{grid-template-columns:1fr}.hero h2{font-size:36px}.pillrow{justify-content:flex-start}}
 
     .panel{
-      border-radius: var(--r2);
+      border-radius:var(--r2);
       border:1px solid rgba(255,255,255,.10);
       background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-      box-shadow: var(--shadow2);
-      padding: 14px;
+      box-shadow:var(--shadow2);
+      padding:14px;
+      backdrop-filter: blur(14px);
     }
 
-    .kvs{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-top:12px;
-    }
-    .kv{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 12px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      min-width: 220px;
-      flex: 1;
-    }
-    .kv .k{color: rgba(255,255,255,.55); font-size:12px}
-    .kv .v{font-weight:650; letter-spacing:.01em}
-    .kv .chip{
-      margin-left:auto;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: rgba(255,255,255,.75);
-      opacity:.9;
-    }
-
-    .controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-top:12px;
-    }
-    .input, .select, .btn{
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.20);
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+    .input,.select,.btn{
+      border-radius:16px;border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
       color: rgba(255,255,255,.86);
-      padding: 12px 12px;
-      outline: none;
-      box-shadow: 0 12px 24px rgba(0,0,0,.25);
+      padding:12px 12px;outline:none;
+      box-shadow:0 12px 24px rgba(0,0,0,.25);
+      backdrop-filter: blur(12px);
     }
-    .input{flex: 1; min-width: 220px}
-    .select{min-width: 160px}
+    .input{flex:1;min-width:220px}
+    .select{min-width:160px}
     .btn{
-      cursor:pointer;
-      user-select:none;
-      padding:12px 14px;
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      font-weight:650;
-      letter-spacing:.01em;
+      cursor:pointer;user-select:none;
+      padding:12px 14px;display:inline-flex;align-items:center;gap:10px;
+      font-weight:700;letter-spacing:.01em;
     }
     .btn.gold{
       border-color: rgba(215,181,109,.35);
-      background: linear-gradient(180deg, rgba(215,181,109,.16), rgba(0,0,0,.20));
+      background: linear-gradient(180deg, rgba(215,181,109,.16), rgba(0,0,0,.22));
     }
-    .btn:hover{transform: translateY(-1px)}
-    .btn:active{transform: translateY(0px)}
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0px)}
 
-    .list{
-      margin-top:14px;
-      display:grid;
-      gap: 10px;
+    .warnbox{
+      margin-top:12px;border-radius:var(--r2);
+      border:1px solid rgba(215,181,109,.25);
+      background: linear-gradient(180deg, rgba(215,181,109,.10), rgba(0,0,0,.22));
+      padding:12px 14px;color:rgba(255,255,255,.78);
+      font-size:12px;line-height:1.45;
+      backdrop-filter: blur(14px);
     }
+    .hidden{display:none !important}
 
+    .list{margin-top:14px;display:grid;gap:10px;}
     .card{
-      border-radius: var(--r2);
+      border-radius:var(--r2);
       border:1px solid rgba(255,255,255,.10);
       background:
-        radial-gradient(600px 200px at 15% 0%, rgba(215,181,109,.10), transparent 55%),
+        radial-gradient(600px 240px at 15% 0%, rgba(215,181,109,.12), transparent 55%),
         linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      box-shadow: var(--shadow2);
-      padding: 14px;
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      justify-content:space-between;
+      box-shadow:var(--shadow2);
+      padding:14px;
+      display:flex;gap:12px;align-items:flex-start;justify-content:space-between;
+      backdrop-filter: blur(14px);
     }
-    .card:hover{
-      border-color: rgba(255,255,255,.16);
-      background:
-        radial-gradient(600px 200px at 15% 0%, rgba(215,181,109,.14), transparent 55%),
-        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-    }
-    .left{
-      min-width: 0;
-      flex:1;
-    }
-    .idrow{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:6px;
-    }
+    .card:hover{border-color:rgba(255,255,255,.16);transform:translateY(-1px);}
+
+    .left{min-width:0;flex:1;}
+    .idrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
     .id{
-      font-family: var(--mono);
-      font-size: 13px;
-      color: rgba(255,255,255,.78);
-      padding:7px 10px;
-      border-radius: 999px;
+      font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.80);
+      padding:7px 10px;border-radius:999px;
       border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.22);
+      background: rgba(0,0,0,.24);
     }
     .status{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:7px 10px;
-      border-radius: 999px;
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 10px;border-radius:999px;
       border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.16);
-      color: rgba(255,255,255,.75);
-      font-size: 12px;
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.78);font-size:12px;
     }
-    .status .sdot{
-      width:8px;height:8px;border-radius:50%;
-      background: var(--warn);
-      box-shadow: 0 0 12px rgba(255,204,102,.25);
-    }
-    .status.ok .sdot{background: var(--ok); box-shadow: 0 0 12px rgba(69,212,131,.25)}
-    .status.bad .sdot{background: var(--bad); box-shadow: 0 0 12px rgba(255,93,108,.25)}
+    .status .sdot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 12px rgba(255,204,102,.22);}
+    .status.ok .sdot{background:var(--ok);box-shadow:0 0 12px rgba(69,212,131,.22);}
+    .status.bad .sdot{background:var(--bad);box-shadow:0 0 12px rgba(255,93,108,.22);}
 
-    .entity{
-      font-size: 22px;
-      font-weight: 750;
-      margin: 2px 0 6px;
-      letter-spacing: -.01em;
-      color: rgba(255,255,255,.92);
-    }
-    .meta{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom:10px;
-    }
-    .tagrow{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
+    .entity{font-size:22px;font-weight:780;margin:2px 0 6px;letter-spacing:-.01em;}
+    .meta{display:flex;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:12px;margin-bottom:10px;}
+    .tagrow{display:flex;flex-wrap:wrap;gap:8px;}
     .tag{
-      font-size:12px;
-      padding:7px 10px;
-      border-radius: 999px;
+      font-size:12px;padding:7px 10px;border-radius:999px;
       border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
       color: rgba(255,255,255,.72);
     }
 
-    .right{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-      align-items:flex-start;
-      min-width: 180px;
-    }
-
+    .right{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start;min-width:180px;}
     .smallbtn{
-      text-decoration:none;
-      cursor:pointer;
-      user-select:none;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:10px 12px;
-      border-radius: 16px;
+      text-decoration:none;cursor:pointer;user-select:none;
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:16px;
       border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.20);
-      color: rgba(255,255,255,.84);
-      font-size:12px;
-      font-weight:650;
-      box-shadow: 0 12px 24px rgba(0,0,0,.20);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.86);
+      font-size:12px;font-weight:750;
+      box-shadow:0 12px 24px rgba(0,0,0,.20);
+      backdrop-filter: blur(12px);
     }
     .smallbtn.gold{
       border-color: rgba(215,181,109,.35);
-      background: linear-gradient(180deg, rgba(215,181,109,.14), rgba(0,0,0,.20));
+      background: linear-gradient(180deg, rgba(215,181,109,.14), rgba(0,0,0,.22));
     }
-    .smallbtn:hover{transform: translateY(-1px)}
-    .smallbtn:active{transform: translateY(0px)}
+    .smallbtn:hover{transform:translateY(-1px)}
+    .smallbtn:active{transform:translateY(0px)}
 
     .foot{
-      margin-top:14px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
-      color: var(--faint);
-      font-size: 12px;
+      margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;
+      align-items:center;justify-content:space-between;color:var(--faint);font-size:12px;
     }
-    .mono{font-family: var(--mono)}
-    .warnbox{
-      margin-top: 12px;
-      border-radius: var(--r2);
-      border:1px solid rgba(215,181,109,.25);
-      background: linear-gradient(180deg, rgba(215,181,109,.10), rgba(0,0,0,.22));
-      padding: 12px 14px;
-      color: rgba(255,255,255,.78);
-      font-size: 12px;
-      line-height:1.45;
-    }
-
-    .muted{color: var(--muted)}
-    .hidden{display:none !important}
+    .mono{font-family:var(--mono)}
   </style>
 </head>
 
-<body class="stars">
+<body>
+  <!-- Motion layer -->
+  <canvas id="fx"></canvas>
+
+  <!-- APEX logo always in background -->
+  <div id="apexMark" aria-hidden="true">
+    <!-- Inline APEX mark (no external file needed) -->
+    <svg viewBox="0 0 1200 650" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#d7b56d" stop-opacity="0.85"/>
+          <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.18"/>
+          <stop offset="1" stop-color="#b8923a" stop-opacity="0.75"/>
+        </linearGradient>
+        <radialGradient id="rg" cx="50%" cy="45%" r="65%">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+          <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- subtle halo -->
+      <circle cx="600" cy="300" r="260" fill="url(#rg)"/>
+
+      <!-- stylized APEX word -->
+      <g fill="none" stroke="url(#g)" stroke-width="18" stroke-linejoin="round" stroke-linecap="round" opacity="0.95">
+        <!-- A -->
+        <path d="M140 520 L250 180 L360 520"/>
+        <path d="M190 380 H310"/>
+        <!-- P -->
+        <path d="M410 520 V180"/>
+        <path d="M410 180 H560 Q640 180 640 260 Q640 340 560 340 H410"/>
+        <!-- E -->
+        <path d="M720 180 V520"/>
+        <path d="M720 180 H900"/>
+        <path d="M720 350 H860"/>
+        <path d="M720 520 H900"/>
+        <!-- X -->
+        <path d="M960 180 L1120 520"/>
+        <path d="M1120 180 L960 520"/>
+      </g>
+
+      <!-- central flare -->
+      <g opacity="0.20">
+        <path d="M600 80 V580" stroke="#d7b56d" stroke-width="6"/>
+        <path d="M430 300 H770" stroke="#ffffff" stroke-width="2"/>
+      </g>
+    </svg>
+  </div>
+
+  <div id="haze"></div>
+
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
-        <div class="orb" aria-hidden="true"></div>
+        <div class="orb"></div>
         <div class="titleblock">
           <h1>APEX-ATA LEDGER</h1>
           <div class="sub">Public registry • append-only • citeable IDs</div>
@@ -419,21 +330,21 @@
       </div>
 
       <div class="pillrow">
-        <a class="pill" id="pillStatus" href="#" onclick="return false;">
+        <a class="pill" href="#" onclick="return false;">
           <span class="dot" id="statusDot"></span>
           <span id="statusText">READY</span>
           <span class="mono" id="clockText"></span>
         </a>
         <a class="pill gold" id="repoLink" target="_blank" rel="noreferrer">REPO</a>
-        <a class="pill gold" id="registryLink" href="#registry">REGISTRY</a>
-        <a class="pill gold" id="verifierLink" href="#verify">VERIFIER</a>
+        <a class="pill gold" href="#registry">REGISTRY</a>
+        <a class="pill gold" href="#verify">VERIFIER</a>
       </div>
     </div>
 
     <section class="hero">
       <h2>Authority you can cite.<br/>Evidence you can anchor.</h2>
       <p>
-        This is the public face of the <b>APEX-ATA Ledger</b>: an append-only registry of records and attestations.
+        This is the public face of the <b>APEX-ATA Ledger</b>: an append-only registry of attestations.
         Each entry has a stable ID and a source pointer. Commit history is the canonical timestamp.
       </p>
 
@@ -464,19 +375,18 @@
       <div class="grid">
         <div class="panel" id="registry">
           <div class="controls">
-            <input id="q" class="input" placeholder="Search: Meta, NVIDIA, ATA-2026-0005, AI, compute…" />
+            <input id="q" class="input" placeholder="Search: Meta, NVIDIA, ATA-2026-0005, AI, compute…"/>
             <select id="statusFilter" class="select">
               <option value="all">Status: All</option>
               <option value="unverified">Unverified</option>
               <option value="verified">Verified</option>
               <option value="flagged">Flagged</option>
             </select>
-            <button class="btn gold" id="copyCitation">Copy citation pattern</button>
+            <button class="btn gold" id="copyPattern">Copy citation pattern</button>
           </div>
 
-          <div class="warnbox" id="demoBox">
-            <b>Registry status:</b> Demo mode. To go live, add <span class="mono">/registry/index.json</span> in this repo.
-            Once present, entries and counts update automatically.
+          <div class="warnbox hidden" id="demoBox">
+            <b>Registry status:</b> Demo mode. Add <span class="mono">/registry/index.json</span> to go live.
           </div>
 
           <div class="list" id="list"></div>
@@ -488,28 +398,23 @@
         </div>
 
         <div class="panel" id="verify">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
             <div>
-              <div style="font-weight:800; letter-spacing:.02em;">Verifier (simple mode)</div>
-              <div class="muted" style="font-size:12px; margin-top:4px;">
-                Jump to an entry ID. For cryptographic verification, wire your verifier endpoint later.
+              <div style="font-weight:850;letter-spacing:.02em;">Verifier (simple mode)</div>
+              <div class="muted" style="font-size:12px;margin-top:4px;">
+                Jump to an entry ID. Wire deeper verification later.
               </div>
             </div>
           </div>
 
           <div class="controls" style="margin-top:12px;">
-            <input id="jumpId" class="input" placeholder="ID  e.g. ATA-2026-0005" />
+            <input id="jumpId" class="input" placeholder="ID  e.g. ATA-2026-0005"/>
             <button class="btn gold" id="jumpBtn">Jump</button>
-            <a class="btn" id="openVerifierBtn" href="./verifier/" target="_blank" rel="noreferrer">Open Verifier</a>
+            <a class="btn" href="./verifier/" target="_blank" rel="noreferrer">Open Verifier</a>
           </div>
 
           <div class="warnbox" style="margin-top:12px;">
-            If <span class="mono">/verifier/index.html</span> exists, “Open Verifier” will work.
-            If not, it will safely 404 until you add it.
-          </div>
-
-          <div style="margin-top:12px; color:rgba(255,255,255,.62); font-size:12px; line-height:1.5;">
-            <b>Public posture:</b> records only • no private data • no speculative claims • audit-ready • linkable.
+            Public posture: registry records only • no private data • audit-ready • linkable.
           </div>
         </div>
       </div>
@@ -517,30 +422,25 @@
   </div>
 
   <script>
-    // Clock / header
+    // === Clock ===
     const clockText = document.getElementById("clockText");
     function tick(){
       const d = new Date();
       const pad = n => String(n).padStart(2,"0");
-      const s = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      clockText.textContent = `• ${s}`;
+      clockText.textContent = `• ${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
     tick(); setInterval(tick, 15000);
 
-    // Repo link detection (best effort for GitHub Pages)
-    const repoLink = document.getElementById("repoLink");
-    // If you are on org/user pages, this is correct. If you're on custom domain, still harmless.
-    repoLink.href = "https://github.com/apex-architecture/apex-ata";
+    // Set repo link (edit if needed)
+    document.getElementById("repoLink").href = "https://github.com/apex-architecture/apex-ata";
 
-    // Registry data load
+    // === Registry load ===
     const demoBox = document.getElementById("demoBox");
     const modeChip = document.getElementById("modeChip");
     const listEl = document.getElementById("list");
     const countEl = document.getElementById("count");
     const updatedEl = document.getElementById("updated");
     const citePatternEl = document.getElementById("citePattern");
-
-    let REG = null;
 
     const demoData = {
       registry:"APEX-ATA",
@@ -554,21 +454,21 @@
       ]
     };
 
+    let REG = null;
+
     async function loadRegistry(){
       try{
         const res = await fetch("./registry/index.json", { cache:"no-store" });
         if(!res.ok) throw new Error("missing registry/index.json");
-        const data = await res.json();
-        REG = data;
+        REG = await res.json();
         demoBox.classList.add("hidden");
         modeChip.textContent = "live";
-        render();
       }catch(e){
         REG = demoData;
         demoBox.classList.remove("hidden");
         modeChip.textContent = "demo";
-        render();
       }
+      render();
     }
 
     function norm(s){ return (s||"").toString().toLowerCase(); }
@@ -607,9 +507,6 @@
       st.className = "status " + statusClass(status);
       st.innerHTML = `<span class="sdot"></span><span>${status}</span>`;
 
-      idrow.appendChild(idpill);
-      idrow.appendChild(st);
-
       const h = document.createElement("div");
       h.className = "entity";
       h.textContent = entity;
@@ -626,6 +523,9 @@
         tag.textContent = t;
         tagrow.appendChild(tag);
       });
+
+      idrow.appendChild(idpill);
+      idrow.appendChild(st);
 
       left.appendChild(idrow);
       left.appendChild(h);
@@ -646,7 +546,7 @@
       srcBtn.href = src || "#";
       srcBtn.target = "_blank";
       srcBtn.rel = "noreferrer";
-      if(!src) srcBtn.onclick = (ev)=>{ ev.preventDefault(); };
+      if(!src) srcBtn.onclick = (ev)=>ev.preventDefault();
 
       right.appendChild(citeBtn);
       right.appendChild(srcBtn);
@@ -660,88 +560,187 @@
     function render(){
       const q = norm(document.getElementById("q").value);
       const sf = document.getElementById("statusFilter").value;
-
       const entries = (REG && Array.isArray(REG.entries)) ? REG.entries : [];
+
       const filtered = entries.filter(e=>{
         const hay = [
           e.id, e.entity, e.type, e.primary_jurisdiction, e.operations,
-          ...(Array.isArray(e.sector)? e.sector: []),
+          ...(Array.isArray(e.sector)? e.sector : []),
           e.status
         ].map(norm).join(" ");
         const matchesQ = !q || hay.includes(q);
+
         const st = norm(e.status);
         const matchesS =
           sf === "all" ||
           (sf === "unverified" && st.includes("unverified")) ||
           (sf === "verified" && st.includes("verified")) ||
           (sf === "flagged" && (st.includes("flag") || st.includes("risk")));
+
         return matchesQ && matchesS;
       });
 
       listEl.innerHTML = "";
-      filtered.forEach(e=> listEl.appendChild(makeCard(e)));
+      filtered.forEach(e => listEl.appendChild(makeCard(e)));
 
-      countEl.textContent = filtered.length.toString();
+      countEl.textContent = String(filtered.length);
       updatedEl.textContent = (REG.updated || "—");
       citePatternEl.textContent = (REG.citation_pattern || "APEX-ATA • ATA-YYYY-NNNN");
     }
 
+    document.getElementById("q").addEventListener("input", render);
+    document.getElementById("statusFilter").addEventListener("change", render);
+
     async function copyToClipboard(text){
-      try{
-        await navigator.clipboard.writeText(text);
-        pulseStatus("COPIED", true);
-      }catch{
-        // fallback
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        ta.remove();
-        pulseStatus("COPIED", true);
+      try{ await navigator.clipboard.writeText(text); pulse("COPIED"); }
+      catch{
+        const ta=document.createElement("textarea");
+        ta.value=text; document.body.appendChild(ta);
+        ta.select(); document.execCommand("copy"); ta.remove();
+        pulse("COPIED");
       }
     }
 
     function copyCitationFor(entry){
       const id = entry.id || "ATA-YYYY-NNNN";
-      const path = `registry/index.json`;
       const base = location.origin + location.pathname.replace(/\/[^\/]*$/, "/");
-      const src = entry.source ? `Source: ${entry.source}` : "";
-      const citation = `APEX-ATA • ${id} • ${base}${path} • commit=git-history` + (src ? ` • ${src}` : "");
+      const citation = `APEX-ATA • ${id} • ${base}registry/index.json • commit=git-history` + (entry.source?` • Source: ${entry.source}`:"");
       copyToClipboard(citation);
     }
 
-    const pillStatus = document.getElementById("pillStatus");
-    const statusText = document.getElementById("statusText");
-    const statusDot = document.getElementById("statusDot");
-
-    function pulseStatus(text, ok){
-      statusText.textContent = text;
-      statusDot.style.background = ok ? "var(--ok)" : "var(--warn)";
-      setTimeout(()=>{
-        statusText.textContent = "READY";
-        statusDot.style.background = "var(--ok)";
-      }, 1200);
-    }
-
-    document.getElementById("copyCitation").onclick = () => {
-      const pat = (REG && REG.citation_pattern) ? REG.citation_pattern : "APEX-ATA • ATA-YYYY-NNNN";
-      copyToClipboard(pat);
+    document.getElementById("copyPattern").onclick = () => {
+      copyToClipboard((REG && REG.citation_pattern) ? REG.citation_pattern : "APEX-ATA • ATA-YYYY-NNNN");
     };
-
-    document.getElementById("q").addEventListener("input", render);
-    document.getElementById("statusFilter").addEventListener("change", render);
 
     document.getElementById("jumpBtn").onclick = () => {
-      const v = (document.getElementById("jumpId").value || "").trim();
+      const v=(document.getElementById("jumpId").value||"").trim();
       if(!v) return;
-      location.hash = "#" + encodeURIComponent(v).replace(/%/g,"");
-      const el = document.getElementById(v);
+      const el=document.getElementById(v);
       if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
-      pulseStatus("JUMP", true);
+      pulse("JUMP");
     };
 
-    // Boot
+    // Status pulse
+    const statusText=document.getElementById("statusText");
+    const statusDot=document.getElementById("statusDot");
+    function pulse(t){
+      statusText.textContent=t;
+      setTimeout(()=>statusText.textContent="READY", 1100);
+    }
+
+    // === APEX Motion Particles (Canvas) ===
+    const canvas = document.getElementById("fx");
+    const ctx = canvas.getContext("2d", { alpha:true });
+
+    let W=0,H=0, DPR=1;
+    function resize(){
+      DPR = Math.min(2, window.devicePixelRatio || 1);
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+    window.addEventListener("resize", resize, {passive:true});
+    resize();
+
+    // Particle system tuned for "APEX Watchtower vibe"
+    const N = Math.floor(Math.min(140, Math.max(70, (W*H)/14000)));
+    const pts = [];
+    const rnd = (a,b)=>a + Math.random()*(b-a);
+
+    for(let i=0;i<N;i++){
+      pts.push({
+        x:rnd(0,W), y:rnd(0,H),
+        vx:rnd(-0.18,0.18), vy:rnd(-0.12,0.12),
+        r:rnd(0.7, 1.9),
+        a:rnd(0.10,0.38)
+      });
+    }
+
+    let mx=W*0.5, my=H*0.35;
+    window.addEventListener("pointermove", (e)=>{ mx=e.clientX; my=e.clientY; }, {passive:true});
+
+    function step(){
+      ctx.clearRect(0,0,W,H);
+
+      // background dust glow
+      const g = ctx.createRadialGradient(W*0.5, H*0.85, 0, W*0.5, H*0.85, Math.max(W,H)*0.7);
+      g.addColorStop(0, "rgba(215,181,109,0.08)");
+      g.addColorStop(0.55, "rgba(255,255,255,0.02)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+
+      // links
+      for(let i=0;i<N;i++){
+        const p=pts[i];
+
+        // drift + subtle mouse gravity
+        const dx = (mx - p.x);
+        const dy = (my - p.y);
+        p.vx += dx * 0.0000009;
+        p.vy += dy * 0.0000007;
+
+        p.x += p.vx; p.y += p.vy;
+
+        // wrap
+        if(p.x < -20) p.x = W+20;
+        if(p.x > W+20) p.x = -20;
+        if(p.y < -20) p.y = H+20;
+        if(p.y > H+20) p.y = -20;
+
+        // damp
+        p.vx *= 0.995;
+        p.vy *= 0.995;
+      }
+
+      // draw links and nodes
+      for(let i=0;i<N;i++){
+        const a=pts[i];
+
+        for(let j=i+1;j<N;j++){
+          const b=pts[j];
+          const dx=a.x-b.x, dy=a.y-b.y;
+          const d2=dx*dx+dy*dy;
+
+          const maxD = 140; // link distance
+          if(d2 < maxD*maxD){
+            const d = Math.sqrt(d2);
+            const t = 1 - (d/maxD);
+
+            // gold-ish link, very subtle
+            ctx.strokeStyle = `rgba(215,181,109,${0.10 * t})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(a.x,a.y);
+            ctx.lineTo(b.x,b.y);
+            ctx.stroke();
+          }
+        }
+
+        // node
+        ctx.fillStyle = `rgba(255,255,255,${a.a})`;
+        ctx.beginPath();
+        ctx.arc(a.x,a.y,a.r,0,Math.PI*2);
+        ctx.fill();
+
+        // tiny gold sparkle occasionally
+        if(Math.random() < 0.003){
+          ctx.fillStyle = "rgba(215,181,109,0.55)";
+          ctx.beginPath();
+          ctx.arc(a.x,a.y,a.r*1.7,0,Math.PI*2);
+          ctx.fill();
+        }
+      }
+
+      requestAnimationFrame(step);
+    }
+    step();
+
+    // Boot registry
     loadRegistry();
   </script>
 </body>
