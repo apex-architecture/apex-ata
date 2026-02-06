@@ -2,1002 +2,747 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#0b0f19" />
-  <title>APEX-ATA Ledger — Public Registry</title>
-  <meta name="description" content="APEX-ATA Ledger: public registry of attestations and records. Immutable by commit history. Verifiable by source links." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>APEX-ATA Ledger</title>
+  <meta name="description" content="Public, append-only registry of attestations with citeable IDs. Commit history is the canonical timestamp." />
+  <meta name="theme-color" content="#0b0f16" />
+
   <style>
     :root{
-      --bg:#070a12;
-      --panel:rgba(255,255,255,.055);
-      --panel2:rgba(255,255,255,.035);
-      --stroke:rgba(255,255,255,.10);
-      --stroke2:rgba(255,255,255,.06);
-      --text:rgba(255,255,255,.92);
-      --muted:rgba(255,255,255,.62);
-      --muted2:rgba(255,255,255,.46);
-      --good:#31d27c;
+      --bg0:#070a10;
+      --bg1:#0b0f16;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.04);
+      --line: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.88);
+      --muted: rgba(255,255,255,.58);
+      --faint: rgba(255,255,255,.38);
+      --gold: #d7b56d;
+      --gold2:#b8923a;
+      --ok: #45d483;
       --warn:#ffcc66;
-      --bad:#ff5d5d;
-      --accent:#c9b37e; /* gold */
-      --accent2:#79a6ff;
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --radius:18px;
-      --radius2:26px;
+      --bad:#ff5d6c;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --shadow2: 0 10px 30px rgba(0,0,0,.45);
+      --r: 18px;
+      --r2: 26px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
-      font-family:var(--sans);
+      font-family: var(--sans);
       color:var(--text);
       background:
-        radial-gradient(1200px 800px at 20% 12%, rgba(201,179,126,.16), transparent 60%),
-        radial-gradient(1100px 900px at 80% 18%, rgba(121,166,255,.12), transparent 62%),
-        radial-gradient(900px 700px at 55% 85%, rgba(49,210,124,.10), transparent 62%),
-        linear-gradient(180deg, #050712 0%, #070a12 40%, #050712 100%);
+        radial-gradient(1200px 700px at 20% 10%, rgba(215,181,109,.14), transparent 55%),
+        radial-gradient(900px 600px at 80% 20%, rgba(69,212,131,.08), transparent 55%),
+        radial-gradient(900px 600px at 50% 90%, rgba(255,255,255,.05), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
       overflow-x:hidden;
     }
-    a{color:inherit}
-    .wrap{max-width:1180px;margin:0 auto;padding:22px 16px 70px}
-    .topbar{
-      display:flex;align-items:center;justify-content:space-between;gap:14px;
-      position:sticky;top:0;z-index:40;
-      padding:14px 12px;
-      backdrop-filter: blur(12px);
-      background: linear-gradient(180deg, rgba(7,10,18,.78), rgba(7,10,18,.46));
-      border-bottom:1px solid var(--stroke2);
-    }
-    .brand{
-      display:flex;align-items:center;gap:12px;min-width:240px;
-    }
-    .sigil{
-      width:38px;height:38px;border-radius:12px;
-      background:
-        radial-gradient(circle at 30% 30%, rgba(201,179,126,.55), rgba(201,179,126,.12) 55%, transparent 68%),
-        linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.02));
-      border:1px solid var(--stroke);
-      box-shadow: 0 10px 30px rgba(0,0,0,.45);
-      overflow:hidden;
-      position:relative;
-      flex:0 0 auto;
-    }
-    .sigil img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92}
-    .brand h1{
-      font-size:14px;letter-spacing:.12em;text-transform:uppercase;margin:0;line-height:1.2;
-      color:rgba(255,255,255,.88);
-    }
-    .brand .sub{
-      font-size:12px;color:var(--muted);margin-top:2px;line-height:1.2;
-    }
-    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-    .btn{
-      display:inline-flex;align-items:center;gap:10px;
-      border:1px solid var(--stroke);
-      background:linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.03));
-      padding:10px 12px;border-radius:14px;
-      text-decoration:none;
-      box-shadow: 0 10px 28px rgba(0,0,0,.25);
-      cursor:pointer;
-      user-select:none;
-      transition: transform .12s ease, border-color .12s ease, background .12s ease;
-      font-size:13px;color:rgba(255,255,255,.88);
-      white-space:nowrap;
-    }
-    .btn:hover{transform: translateY(-1px); border-color: rgba(201,179,126,.35)}
-    .btn:active{transform: translateY(0px) scale(.99)}
-    .btn.primary{
-      border-color: rgba(201,179,126,.55);
-      background: linear-gradient(180deg, rgba(201,179,126,.22), rgba(255,255,255,.03));
-    }
-    .btn .dot{
-      width:8px;height:8px;border-radius:99px;background:var(--accent);
-      box-shadow: 0 0 16px rgba(201,179,126,.55);
-    }
-    .btn .ic{font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.76)}
-    .hero{
-      padding:34px 4px 18px;
-      display:grid;grid-template-columns: 1.05fr .95fr;gap:18px;align-items:stretch;
-    }
-    @media (max-width: 980px){ .hero{grid-template-columns:1fr; padding-top:18px;} .brand{min-width:auto} }
-    .card{
-      border:1px solid var(--stroke2);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      position:relative;
-    }
-    .card::before{
+
+    /* subtle starfield */
+    .stars:before,.stars:after{
       content:"";
-      position:absolute;inset:-2px;
-      background: radial-gradient(900px 240px at 20% 0%, rgba(201,179,126,.12), transparent 60%),
-                  radial-gradient(700px 240px at 70% 0%, rgba(121,166,255,.10), transparent 62%);
+      position:fixed; inset:0;
+      background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.20), transparent 60%),
+        radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(1px 1px at 55% 40%, rgba(255,255,255,.14), transparent 60%),
+        radial-gradient(1px 1px at 80% 30%, rgba(255,255,255,.16), transparent 60%),
+        radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,.12), transparent 60%),
+        radial-gradient(1px 1px at 20% 85%, rgba(255,255,255,.10), transparent 60%);
+      opacity:.65;
       pointer-events:none;
-      opacity:.85;
+      z-index:-1;
+      filter: blur(.2px);
     }
-    .card > .inner{position:relative; padding:18px}
-    .hero h2{
-      margin:0;
-      font-size:32px;
-      letter-spacing:-.02em;
-      line-height:1.1;
+    .stars:after{
+      opacity:.35;
+      transform: scale(1.2);
     }
-    .hero p{margin:10px 0 0; color:var(--muted); font-size:14px; line-height:1.5}
-    .pillrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    .pill{
-      border:1px solid var(--stroke2);
-      background:rgba(255,255,255,.03);
-      padding:8px 10px;border-radius:999px;
-      font-size:12px;color:rgba(255,255,255,.78);
-      display:inline-flex;gap:8px;align-items:center;
-    }
-    .pill b{color:rgba(255,255,255,.92); font-weight:600}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-    @media (max-width: 560px){ .grid2{grid-template-columns:1fr} .hero h2{font-size:28px} }
-    .stat{
-      border:1px solid var(--stroke2);
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border-radius: var(--radius);
-      padding:12px;
-    }
-    .stat .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2)}
-    .stat .v{margin-top:6px;font-size:20px;font-weight:650}
-    .stat .s{margin-top:4px;font-size:12px;color:var(--muted)}
-    .controls{
-      display:grid;grid-template-columns: 1.4fr .8fr .8fr auto; gap:10px;
-      margin:16px 4px 10px;
-      align-items:center;
-    }
-    @media (max-width: 980px){ .controls{grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 520px){ .controls{grid-template-columns: 1fr; } }
-    .field{
-      border:1px solid var(--stroke2);
-      background: rgba(255,255,255,.03);
-      border-radius: 16px;
-      padding:10px 12px;
-      display:flex;gap:10px;align-items:center;
-    }
-    .field input,.field select{
-      width:100%;
-      background:transparent;
-      border:0; outline:0;
-      color:rgba(255,255,255,.9);
-      font-size:13px;
-      appearance:none;
-    }
-    .field select{cursor:pointer}
-    .field .hint{font-family:var(--mono); font-size:12px; color:var(--muted2)}
-    .split{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      margin: 8px 4px 0;
-      color:var(--muted);
-      font-size:12px;
-    }
-    .split b{color:rgba(255,255,255,.9)}
-    .list{
-      margin-top:12px;
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap:12px;
-    }
-    @media (max-width: 980px){ .list{grid-template-columns: repeat(2, 1fr)} }
-    @media (max-width: 560px){ .list{grid-template-columns: 1fr} }
-    .entry{
-      border:1px solid var(--stroke2);
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
-      border-radius: 20px;
-      padding:14px;
-      position:relative;
-      overflow:hidden;
-      transition: transform .12s ease, border-color .12s ease;
-      cursor:pointer;
-    }
-    .entry:hover{transform: translateY(-2px); border-color: rgba(201,179,126,.30)}
-    .entry .top{
-      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
-    }
-    .badge{
-      display:inline-flex;align-items:center;gap:7px;
-      border:1px solid var(--stroke2);
-      background:rgba(255,255,255,.03);
-      padding:6px 9px;border-radius:999px;
-      font-size:11px;color:rgba(255,255,255,.78);
-      white-space:nowrap;
-    }
-    .badge .dot{width:7px;height:7px;border-radius:99px;background:var(--muted2)}
-    .badge.good .dot{background:var(--good)}
-    .badge.warn .dot{background:var(--warn)}
-    .badge.bad  .dot{background:var(--bad)}
-    .badge.neutral .dot{background:var(--accent2)}
-    .eid{
-      font-family:var(--mono);
-      font-size:12px;
-      color:rgba(255,255,255,.76);
-    }
-    .title{
-      margin-top:10px;
-      font-size:15px;
-      font-weight:650;
-      letter-spacing:-.01em;
-      line-height:1.25;
-    }
-    .meta{
-      margin-top:8px;
-      color:var(--muted);
-      font-size:12px;
-      display:flex;flex-wrap:wrap;gap:8px;
-    }
-    .chip{
-      border:1px solid var(--stroke2);
-      background:rgba(255,255,255,.02);
-      padding:5px 8px;border-radius:999px;
-      font-size:11px;color:rgba(255,255,255,.70);
-    }
-    .foot{
-      margin-top:10px;
-      display:flex;justify-content:space-between;align-items:center;gap:10px;
-      color:var(--muted2);font-size:11px;
-    }
-    .foot .link{
-      text-decoration:none;
-      border-bottom:1px dashed rgba(201,179,126,.35);
-      color:rgba(255,255,255,.78);
-    }
-    .empty{
-      margin:18px 4px;
-      padding:16px;
-      border:1px solid var(--stroke2);
-      border-radius: 18px;
-      background: rgba(255,255,255,.02);
-      color: var(--muted);
-      font-size:13px;
-      line-height:1.5;
-    }
-    .footer{
-      margin-top:26px;
-      padding:16px 4px 0;
-      border-top:1px solid var(--stroke2);
-      color: var(--muted2);
-      font-size:12px;
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      justify-content:space-between;
-      align-items:center;
-    }
-    .footer .mono{font-family:var(--mono); color:rgba(255,255,255,.70)}
-    .toast{
-      position:fixed;left:50%;transform:translateX(-50%);
-      bottom:16px;z-index:90;
-      background: rgba(10,14,26,.72);
-      border:1px solid var(--stroke2);
-      padding:10px 12px;border-radius:14px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 14px 40px rgba(0,0,0,.45);
-      color: rgba(255,255,255,.86);
-      font-size:12px;
-      display:none;
-      max-width: calc(100vw - 24px);
-    }
-    /* Modal */
-    .modalWrap{
-      position:fixed;inset:0;z-index:80;
-      background: rgba(0,0,0,.58);
-      backdrop-filter: blur(8px);
-      display:none;
-      padding:18px;
-    }
-    .modal{
-      max-width: 980px;
+
+    .wrap{
+      max-width: 1120px;
       margin: 0 auto;
-      border:1px solid var(--stroke2);
-      background: linear-gradient(180deg, rgba(12,16,30,.94), rgba(7,10,18,.92));
-      border-radius: 24px;
-      box-shadow: 0 30px 110px rgba(0,0,0,.70);
-      overflow:hidden;
+      padding: 22px 16px 60px;
     }
-    .modalHeader{
-      display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
-      padding:14px 16px;
-      border-bottom:1px solid var(--stroke2);
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:18px;
     }
-    .modalHeader .h{
-      display:flex;flex-direction:column;gap:6px;
-      min-width:0;
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width: 240px;
     }
-    .modalHeader .h .t{
-      font-size:14px;font-weight:700; letter-spacing:-.01em;
-      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+
+    .orb{
+      width:34px;height:34px;border-radius:12px;
+      background:
+        radial-gradient(12px 12px at 30% 30%, rgba(255,255,255,.16), transparent 60%),
+        radial-gradient(18px 18px at 60% 60%, rgba(215,181,109,.28), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow2);
     }
-    .modalHeader .h .m{
-      display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--muted);
-      font-size:12px;
-    }
-    .x{
-      border:1px solid var(--stroke2);
-      background: rgba(255,255,255,.03);
-      color:rgba(255,255,255,.85);
-      padding:10px 12px;border-radius:14px;
-      cursor:pointer;
-    }
-    .modalBody{
-      padding:16px;
-      max-height: calc(100vh - 160px);
-      overflow:auto;
-    }
-    .md{
-      line-height:1.55;
-      color:rgba(255,255,255,.86);
-      font-size:14px;
-    }
-    .md h1,.md h2,.md h3{line-height:1.2}
-    .md h1{font-size:22px;margin:14px 0 10px}
-    .md h2{font-size:18px;margin:18px 0 10px}
-    .md h3{font-size:16px;margin:16px 0 8px}
-    .md p{margin:10px 0;color:rgba(255,255,255,.82)}
-    .md ul{margin:10px 0 10px 18px}
-    .md li{margin:6px 0;color:rgba(255,255,255,.82)}
-    .md code{
-      font-family:var(--mono);
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.08);
-      padding:2px 6px;border-radius:10px;
-      font-size: 12px;
-    }
-    .md pre{
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.08);
-      padding:12px;border-radius: 16px;
-      overflow:auto;
-    }
-    .md pre code{background:transparent;border:0;padding:0}
-    .md a{
-      color: rgba(201,179,126,.95);
-      text-decoration: none;
-      border-bottom: 1px dashed rgba(201,179,126,.35);
-    }
-    .md blockquote{
-      margin: 12px 0;
-      padding: 10px 12px;
-      border-left: 3px solid rgba(201,179,126,.55);
-      background: rgba(255,255,255,.03);
-      border-radius: 14px;
+
+    .titleblock h1{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
       color: rgba(255,255,255,.78);
     }
-    .rowBtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    .small{
-      font-size:12px;color:var(--muted);
-      margin-top:8px;
+    .titleblock .sub{
+      margin-top:3px;
+      font-size:12px;
+      color: var(--muted);
+      letter-spacing:.02em;
     }
+
+    .pillrow{
+      display:flex; flex-wrap:wrap;
+      gap:8px;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+      color: rgba(255,255,255,.76);
+      font-size:12px;
+      text-decoration:none;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .pill .dot{
+      width:8px;height:8px;border-radius:50%;
+      background: var(--ok);
+      box-shadow: 0 0 12px rgba(69,212,131,.35);
+    }
+    .pill.gold{
+      color: rgba(255,255,255,.88);
+      border-color: rgba(215,181,109,.30);
+      background: linear-gradient(180deg, rgba(215,181,109,.14), rgba(255,255,255,.03));
+    }
+    .pill.gold:hover{transform: translateY(-1px)}
+    .pill:hover{
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .hero{
+      border-radius: var(--r2);
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(900px 400px at 20% 0%, rgba(215,181,109,.18), transparent 60%),
+        radial-gradient(700px 400px at 90% 0%, rgba(255,255,255,.06), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      padding: 18px 18px 14px;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .hero h2{
+      margin: 8px 0 8px;
+      font-size: 44px;
+      line-height:1.06;
+      letter-spacing:-.02em;
+    }
+    .hero p{
+      margin:0;
+      max-width: 80ch;
+      color: var(--muted);
+      font-size: 14px;
+      line-height:1.55;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    @media (max-width: 920px){
+      .grid{grid-template-columns:1fr}
+      .hero h2{font-size: 36px}
+      .pillrow{justify-content:flex-start}
+    }
+
+    .panel{
+      border-radius: var(--r2);
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      box-shadow: var(--shadow2);
+      padding: 14px;
+    }
+
+    .kvs{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+    }
+    .kv{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      min-width: 220px;
+      flex: 1;
+    }
+    .kv .k{color: rgba(255,255,255,.55); font-size:12px}
+    .kv .v{font-weight:650; letter-spacing:.01em}
+    .kv .chip{
+      margin-left:auto;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(255,255,255,.75);
+      opacity:.9;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:12px;
+    }
+    .input, .select, .btn{
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.86);
+      padding: 12px 12px;
+      outline: none;
+      box-shadow: 0 12px 24px rgba(0,0,0,.25);
+    }
+    .input{flex: 1; min-width: 220px}
+    .select{min-width: 160px}
+    .btn{
+      cursor:pointer;
+      user-select:none;
+      padding:12px 14px;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      font-weight:650;
+      letter-spacing:.01em;
+    }
+    .btn.gold{
+      border-color: rgba(215,181,109,.35);
+      background: linear-gradient(180deg, rgba(215,181,109,.16), rgba(0,0,0,.20));
+    }
+    .btn:hover{transform: translateY(-1px)}
+    .btn:active{transform: translateY(0px)}
+
+    .list{
+      margin-top:14px;
+      display:grid;
+      gap: 10px;
+    }
+
+    .card{
+      border-radius: var(--r2);
+      border:1px solid rgba(255,255,255,.10);
+      background:
+        radial-gradient(600px 200px at 15% 0%, rgba(215,181,109,.10), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow2);
+      padding: 14px;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+    }
+    .card:hover{
+      border-color: rgba(255,255,255,.16);
+      background:
+        radial-gradient(600px 200px at 15% 0%, rgba(215,181,109,.14), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+    }
+    .left{
+      min-width: 0;
+      flex:1;
+    }
+    .idrow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:6px;
+    }
+    .id{
+      font-family: var(--mono);
+      font-size: 13px;
+      color: rgba(255,255,255,.78);
+      padding:7px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+    }
+    .status{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      color: rgba(255,255,255,.75);
+      font-size: 12px;
+    }
+    .status .sdot{
+      width:8px;height:8px;border-radius:50%;
+      background: var(--warn);
+      box-shadow: 0 0 12px rgba(255,204,102,.25);
+    }
+    .status.ok .sdot{background: var(--ok); box-shadow: 0 0 12px rgba(69,212,131,.25)}
+    .status.bad .sdot{background: var(--bad); box-shadow: 0 0 12px rgba(255,93,108,.25)}
+
+    .entity{
+      font-size: 22px;
+      font-weight: 750;
+      margin: 2px 0 6px;
+      letter-spacing: -.01em;
+      color: rgba(255,255,255,.92);
+    }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom:10px;
+    }
+    .tagrow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .tag{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.72);
+    }
+
+    .right{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:flex-start;
+      min-width: 180px;
+    }
+
+    .smallbtn{
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.84);
+      font-size:12px;
+      font-weight:650;
+      box-shadow: 0 12px 24px rgba(0,0,0,.20);
+    }
+    .smallbtn.gold{
+      border-color: rgba(215,181,109,.35);
+      background: linear-gradient(180deg, rgba(215,181,109,.14), rgba(0,0,0,.20));
+    }
+    .smallbtn:hover{transform: translateY(-1px)}
+    .smallbtn:active{transform: translateY(0px)}
+
+    .foot{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      color: var(--faint);
+      font-size: 12px;
+    }
+    .mono{font-family: var(--mono)}
+    .warnbox{
+      margin-top: 12px;
+      border-radius: var(--r2);
+      border:1px solid rgba(215,181,109,.25);
+      background: linear-gradient(180deg, rgba(215,181,109,.10), rgba(0,0,0,.22));
+      padding: 12px 14px;
+      color: rgba(255,255,255,.78);
+      font-size: 12px;
+      line-height:1.45;
+    }
+
+    .muted{color: var(--muted)}
+    .hidden{display:none !important}
   </style>
 </head>
 
-<body>
-  <div class="topbar">
-    <div class="brand">
-      <div class="sigil" title="APEX">
-        <!-- Optional: add apex-sigil.png to your repo root -->
-        <img src="apex-sigil.png" alt="" onerror="this.style.display='none'">
-      </div>
-      <div>
-        <h1>APEX-ATA Ledger</h1>
-        <div class="sub">Public registry • immutable by commit history • citeable IDs</div>
-      </div>
-    </div>
-
-    <div class="actions">
-      <a class="btn" id="btnRepo" href="#" target="_blank" rel="noreferrer">
-        <span class="ic">↗</span> Repo
-      </a>
-      <a class="btn" id="btnRegistry" href="#registry">
-        <span class="ic">⌁</span> Registry
-      </a>
-      <a class="btn" id="btnVerifier" href="#verify">
-        <span class="ic">✓</span> Verifier
-      </a>
-      <button class="btn primary" id="btnCopyCite" type="button" title="Copy a citation template">
-        <span class="dot"></span> Copy citation
-      </button>
-    </div>
-  </div>
-
+<body class="stars">
   <div class="wrap">
-    <section class="hero">
-      <div class="card">
-        <div class="inner">
-          <h2>Authority you can cite.<br/>Evidence you can anchor.</h2>
-          <p>
-            This site is the public face of the <b>APEX-ATA Ledger</b>: an append-only registry of records, verdicts, and attestations.
-            Each entry has a stable ID and a source path. Commit history is the canonical timestamp.
-          </p>
-
-          <div class="pillrow">
-            <div class="pill"><span style="color:var(--accent)">◆</span> Mode: <b>Registry</b></div>
-            <div class="pill"><span style="color:var(--accent2)">◈</span> Format: <b>Machine-readable</b></div>
-            <div class="pill"><span style="color:var(--good)">●</span> Integrity: <b>Append-only discipline</b></div>
-          </div>
-
-          <div class="rowBtns">
-            <a class="btn primary" href="#registry"><span class="ic">↓</span> Enter Registry</a>
-            <a class="btn" href="#about"><span class="ic">i</span> Purpose</a>
-            <a class="btn" href="#verify"><span class="ic">✓</span> Verify</a>
-          </div>
-
-          <div class="small">
-            Tip: add <code>/registry/index.json</code> to make this fully live. If missing, the site shows a safe demo view.
-          </div>
+    <div class="topbar">
+      <div class="brand">
+        <div class="orb" aria-hidden="true"></div>
+        <div class="titleblock">
+          <h1>APEX-ATA LEDGER</h1>
+          <div class="sub">Public registry • append-only • citeable IDs</div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="inner">
-          <div class="grid2">
-            <div class="stat">
-              <div class="k">Registry status</div>
-              <div class="v" id="statStatus">Loading…</div>
-              <div class="s" id="statStatusSub">Checking /registry/index.json</div>
-            </div>
-            <div class="stat">
-              <div class="k">Entries</div>
-              <div class="v" id="statCount">—</div>
-              <div class="s" id="statUpdated">Updated: —</div>
+      <div class="pillrow">
+        <a class="pill" id="pillStatus" href="#" onclick="return false;">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">READY</span>
+          <span class="mono" id="clockText"></span>
+        </a>
+        <a class="pill gold" id="repoLink" target="_blank" rel="noreferrer">REPO</a>
+        <a class="pill gold" id="registryLink" href="#registry">REGISTRY</a>
+        <a class="pill gold" id="verifierLink" href="#verify">VERIFIER</a>
+      </div>
+    </div>
+
+    <section class="hero">
+      <h2>Authority you can cite.<br/>Evidence you can anchor.</h2>
+      <p>
+        This is the public face of the <b>APEX-ATA Ledger</b>: an append-only registry of records and attestations.
+        Each entry has a stable ID and a source pointer. Commit history is the canonical timestamp.
+      </p>
+
+      <div class="kvs">
+        <div class="kv">
+          <div>
+            <div class="k">Mode</div>
+            <div class="v">Registry</div>
+          </div>
+          <div class="chip" id="modeChip">live</div>
+        </div>
+        <div class="kv">
+          <div>
+            <div class="k">Format</div>
+            <div class="v">Machine-readable</div>
+          </div>
+          <div class="chip mono">JSON</div>
+        </div>
+        <div class="kv">
+          <div>
+            <div class="k">Integrity</div>
+            <div class="v">Append-only discipline</div>
+          </div>
+          <div class="chip mono">git</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="panel" id="registry">
+          <div class="controls">
+            <input id="q" class="input" placeholder="Search: Meta, NVIDIA, ATA-2026-0005, AI, compute…" />
+            <select id="statusFilter" class="select">
+              <option value="all">Status: All</option>
+              <option value="unverified">Unverified</option>
+              <option value="verified">Verified</option>
+              <option value="flagged">Flagged</option>
+            </select>
+            <button class="btn gold" id="copyCitation">Copy citation pattern</button>
+          </div>
+
+          <div class="warnbox" id="demoBox">
+            <b>Registry status:</b> Demo mode. To go live, add <span class="mono">/registry/index.json</span> in this repo.
+            Once present, entries and counts update automatically.
+          </div>
+
+          <div class="list" id="list"></div>
+
+          <div class="foot">
+            <div>Entries: <b id="count">0</b> <span class="muted">• Updated:</span> <span id="updated">—</span></div>
+            <div class="mono" id="citePattern">APEX-ATA • ATA-YYYY-NNNN</div>
+          </div>
+        </div>
+
+        <div class="panel" id="verify">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <div>
+              <div style="font-weight:800; letter-spacing:.02em;">Verifier (simple mode)</div>
+              <div class="muted" style="font-size:12px; margin-top:4px;">
+                Jump to an entry ID. For cryptographic verification, wire your verifier endpoint later.
+              </div>
             </div>
           </div>
 
-          <div class="stat" style="margin-top:12px">
-            <div class="k">Citation pattern</div>
-            <div class="v" style="font-family:var(--mono); font-size:14px; font-weight:600">
-              APEX-ATA • <span id="citePattern">ATA-YYYY-NNNN</span>
-            </div>
-            <div class="s">
-              Use the ID + path + commit link for clean verification.
-            </div>
+          <div class="controls" style="margin-top:12px;">
+            <input id="jumpId" class="input" placeholder="ID  e.g. ATA-2026-0005" />
+            <button class="btn gold" id="jumpBtn">Jump</button>
+            <a class="btn" id="openVerifierBtn" href="./verifier/" target="_blank" rel="noreferrer">Open Verifier</a>
           </div>
 
-          <div class="stat" style="margin-top:12px">
-            <div class="k">Public posture</div>
-            <div class="s" style="margin-top:8px; line-height:1.5">
-              Registry records only. No private data. No speculative claims. Sources are listed per entry.
-              This is designed to be referenced, audited, and linked.
-            </div>
+          <div class="warnbox" style="margin-top:12px;">
+            If <span class="mono">/verifier/index.html</span> exists, “Open Verifier” will work.
+            If not, it will safely 404 until you add it.
+          </div>
+
+          <div style="margin-top:12px; color:rgba(255,255,255,.62); font-size:12px; line-height:1.5;">
+            <b>Public posture:</b> records only • no private data • no speculative claims • audit-ready • linkable.
           </div>
         </div>
       </div>
     </section>
-
-    <a id="registry"></a>
-    <div class="controls">
-      <div class="field" title="Search across ID, entity, classification, tags">
-        <span class="hint">SEARCH</span>
-        <input id="q" placeholder="Search: Meta, NVIDIA, ATA-2026-0005, AI, compute…" autocomplete="off" />
-      </div>
-
-      <div class="field" title="Filter by status">
-        <span class="hint">STATUS</span>
-        <select id="status">
-          <option value="">All</option>
-          <option value="Unverified">Unverified</option>
-          <option value="Verified">Verified</option>
-          <option value="Draft">Draft</option>
-          <option value="Archived">Archived</option>
-        </select>
-      </div>
-
-      <div class="field" title="Sort order">
-        <span class="hint">SORT</span>
-        <select id="sort">
-          <option value="new">Newest first</option>
-          <option value="old">Oldest first</option>
-          <option value="az">Entity A→Z</option>
-          <option value="za">Entity Z→A</option>
-        </select>
-      </div>
-
-      <button class="btn" id="btnReset" type="button" title="Reset filters">
-        <span class="ic">⟲</span> Reset
-      </button>
-    </div>
-
-    <div class="split">
-      <div>Showing <b id="shown">0</b> of <b id="total">0</b></div>
-      <div class="mono" id="sourceLine">Source: —</div>
-    </div>
-
-    <div id="empty" class="empty" style="display:none"></div>
-    <div id="list" class="list" aria-live="polite"></div>
-
-    <a id="verify"></a>
-    <div class="card" style="margin-top:18px">
-      <div class="inner">
-        <h2 style="margin:0; font-size:18px">Verifier (simple mode)</h2>
-        <p style="margin:8px 0 0; color:var(--muted); font-size:13px; line-height:1.55">
-          Paste an entry ID to jump. For cryptographic verification and integrity checking, link your existing verifier path.
-          (If you already have a verifier folder, wire it here.)
-        </p>
-
-        <div class="controls" style="margin:14px 0 0; grid-template-columns: 1.6fr auto auto;">
-          <div class="field">
-            <span class="hint">ID</span>
-            <input id="jumpId" placeholder="e.g. ATA-2026-0005" />
-          </div>
-          <button class="btn primary" id="btnJump" type="button"><span class="dot"></span> Jump</button>
-          <button class="btn" id="btnOpenVerifier" type="button"><span class="ic">↗</span> Open Verifier</button>
-        </div>
-
-        <div class="small" id="verifierHint">
-          If your repo contains <code>/verifier/</code> with an <code>index.html</code>, this button will open it.
-        </div>
-      </div>
-    </div>
-
-    <a id="about"></a>
-    <div class="footer">
-      <div>
-        <div style="font-weight:650;color:rgba(255,255,255,.85)">APEX-ATA Ledger</div>
-        <div style="margin-top:6px">Append-only registry interface • Designed for citation, audit, and public linking.</div>
-      </div>
-      <div class="mono" id="footMono">—</div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
-  <div class="modalWrap" id="modalWrap" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal">
-      <div class="modalHeader">
-        <div class="h">
-          <div class="t" id="modalTitle">Entry</div>
-          <div class="m" id="modalMeta"></div>
-        </div>
-        <button class="x" id="btnClose" type="button">Close</button>
-      </div>
-      <div class="modalBody">
-        <div class="rowBtns" style="margin-bottom:12px">
-          <a class="btn" id="btnOpenMd" href="#" target="_blank" rel="noreferrer"><span class="ic">↗</span> Open source</a>
-          <button class="btn primary" id="btnCopyEntryCite" type="button"><span class="dot"></span> Copy citation</button>
-          <button class="btn" id="btnCopyLink" type="button"><span class="ic">⧉</span> Copy link</button>
-        </div>
-        <div class="md" id="md"></div>
-      </div>
-    </div>
   </div>
 
   <script>
-    // ====== CONFIG (safe defaults) ======
-    const REGISTRY_URL = "registry/index.json"; // create this file to go fully live
-    const DEFAULT_STATUS = "Unverified";
-    const FALLBACK_ENTRIES = [
-      {
-        id: "ATA-2026-0005",
-        entity: "Meta Platforms, Inc.",
-        classification: "Public Company",
-        jurisdiction: "United States (Primary), Global Operations",
-        status: "Unverified",
-        tags: ["AI", "Compute", "Infrastructure"],
-        path: "registry/ATA-2026-0005-META.md",
-        updated: "2026-02-06"
-      },
-      {
-        id: "ATA-2026-0014",
-        entity: "NVIDIA Corporation",
-        classification: "Public Company",
-        jurisdiction: "United States (Primary), Global Operations",
-        status: "Unverified",
-        tags: ["AI", "Semiconductors", "Data Center"],
-        path: "registry/ATA-2026-0014-NVIDIA.md",
-        updated: "2026-02-06"
-      },
-      {
-        id: "ATA-2026-0001",
-        entity: "BHP Group",
-        classification: "Public Company",
-        jurisdiction: "Australia (Primary), Global Operations",
-        status: "Unverified",
-        tags: ["Resources", "Infrastructure"],
-        path: "registry/ATA-2026-0001-BHP.md",
-        updated: "2026-02-06"
-      }
-    ];
-
-    // ====== Helpers ======
-    const $ = (id) => document.getElementById(id);
-
-    function toast(msg){
-      const t = $("toast");
-      t.textContent = msg;
-      t.style.display = "block";
-      clearTimeout(toast._t);
-      toast._t = setTimeout(()=> t.style.display = "none", 2400);
+    // Clock / header
+    const clockText = document.getElementById("clockText");
+    function tick(){
+      const d = new Date();
+      const pad = n => String(n).padStart(2,"0");
+      const s = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      clockText.textContent = `• ${s}`;
     }
+    tick(); setInterval(tick, 15000);
 
-    function escapeHtml(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;").replaceAll("<","&lt;")
-        .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
-    }
+    // Repo link detection (best effort for GitHub Pages)
+    const repoLink = document.getElementById("repoLink");
+    // If you are on org/user pages, this is correct. If you're on custom domain, still harmless.
+    repoLink.href = "https://github.com/apex-architecture/apex-ata";
 
-    // minimal markdown renderer (safe / simple)
-    function renderMarkdown(md){
-      if(!md) return "<p style='color:rgba(255,255,255,.70)'>No preview available.</p>";
-      let text = md.replace(/\r\n/g,"\n");
+    // Registry data load
+    const demoBox = document.getElementById("demoBox");
+    const modeChip = document.getElementById("modeChip");
+    const listEl = document.getElementById("list");
+    const countEl = document.getElementById("count");
+    const updatedEl = document.getElementById("updated");
+    const citePatternEl = document.getElementById("citePattern");
 
-      // code blocks
-      const codeBlocks = [];
-      text = text.replace(/```([\s\S]*?)```/g, (m, code)=>{
-        codeBlocks.push(code);
-        return `@@CODEBLOCK_${codeBlocks.length-1}@@`;
-      });
+    let REG = null;
 
-      // inline code
-      text = text.replace(/`([^`]+)`/g, (m,c)=> `<code>${escapeHtml(c)}</code>`);
+    const demoData = {
+      registry:"APEX-ATA",
+      status:"demo",
+      updated:new Date().toISOString().slice(0,10),
+      citation_pattern:"APEX-ATA • ATA-YYYY-NNNN",
+      entries:[
+        {id:"ATA-2026-0001", entity:"BHP Group", type:"Public Company", primary_jurisdiction:"Australia", operations:"Global", sector:["Resources","Infrastructure"], status:"Unverified", source:"https://www.bhp.com"},
+        {id:"ATA-2026-0005", entity:"Meta Platforms, Inc.", type:"Public Company", primary_jurisdiction:"United States", operations:"Global", sector:["AI","Compute","Infrastructure"], status:"Unverified", source:"https://about.meta.com"},
+        {id:"ATA-2026-0007", entity:"NVIDIA Corporation", type:"Public Company", primary_jurisdiction:"United States", operations:"Global", sector:["Semiconductors","AI","Data Center"], status:"Unverified", source:"https://www.nvidia.com"}
+      ]
+    };
 
-      // headings
-      text = text.replace(/^### (.*)$/gm, "<h3>$1</h3>");
-      text = text.replace(/^## (.*)$/gm, "<h2>$1</h2>");
-      text = text.replace(/^# (.*)$/gm, "<h1>$1</h1>");
-
-      // blockquote
-      text = text.replace(/^> (.*)$/gm, "<blockquote>$1</blockquote>");
-
-      // links [text](url)
-      text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (m, t, u)=>{
-        return `<a href="${escapeHtml(u)}" target="_blank" rel="noreferrer">${escapeHtml(t)}</a>`;
-      });
-
-      // unordered lists
-      // wrap consecutive -/* lines into <ul>
-      text = text.replace(/(^|\n)([-*]) (.*)(?=\n|$)/g, (m, start, bullet, item)=>{
-        return `${start}<li>${escapeHtml(item)}</li>`;
-      });
-      text = text.replace(/(<li>[\s\S]*?<\/li>)/g, (block)=>{
-        // group list items that are adjacent
-        return block;
-      });
-      // Post-process: convert runs of <li> into <ul>
-      text = text.replace(/(?:\n|^)(<li>[\s\S]*?<\/li>)(?=\n(?!<li>)|$)/g, (m, run)=>{
-        // This matches only one <li> at a time; we need a better grouping approach:
-        return "\n@@LI_RUN_START@@"+run+"@@LI_RUN_END@@";
-      });
-      // Group tagged runs: collapse consecutive markers
-      while(text.includes("@@LI_RUN_END@@\n@@LI_RUN_START@@")){
-        text = text.replace("@@LI_RUN_END@@\n@@LI_RUN_START@@", "\n");
-      }
-      text = text.replace(/@@LI_RUN_START@@([\s\S]*?)@@LI_RUN_END@@/g, (m, items)=>{
-        // items is one or more <li> lines
-        return `\n<ul>${items}</ul>\n`;
-      });
-
-      // paragraphs: split by blank lines
-      const parts = text.split(/\n{2,}/).map(p=>p.trim()).filter(Boolean);
-      let html = parts.map(p=>{
-        // if already block element
-        if(/^<(h1|h2|h3|ul|pre|blockquote)/.test(p)) return p;
-        // convert single newlines to <br>
-        const safe = p.replace(/\n/g,"<br/>");
-        // escape any stray angle brackets (already escaped inline code/link text)
-        // but preserve our tags by a simple allowlist:
-        // We'll assume remaining p is plain text with <br/> only.
-        return `<p>${escapeHtml(safe).replaceAll("&lt;br/&gt;","<br/>")}</p>`;
-      }).join("\n");
-
-      // restore code blocks
-      html = html.replace(/@@CODEBLOCK_(\d+)@@/g, (m, idx)=>{
-        const code = codeBlocks[Number(idx)] ?? "";
-        return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
-      });
-
-      // Fix any double-escaped <ul>/<li> created in paragraph stage (we avoided by block detection, but just in case)
-      html = html
-        .replaceAll("&lt;ul&gt;","<ul>").replaceAll("&lt;/ul&gt;","</ul>")
-        .replaceAll("&lt;li&gt;","<li>").replaceAll("&lt;/li&gt;","</li>")
-        .replaceAll("&lt;blockquote&gt;","<blockquote>").replaceAll("&lt;/blockquote&gt;","</blockquote>")
-        .replaceAll("&lt;h1&gt;","<h1>").replaceAll("&lt;/h1&gt;","</h1>")
-        .replaceAll("&lt;h2&gt;","<h2>").replaceAll("&lt;/h2&gt;","</h2>")
-        .replaceAll("&lt;h3&gt;","<h3>").replaceAll("&lt;/h3&gt;","</h3>");
-
-      return html;
-    }
-
-    function statusBadge(status){
-      const s = (status || DEFAULT_STATUS).trim();
-      if(s.toLowerCase() === "verified") return ["good","Verified"];
-      if(s.toLowerCase() === "draft") return ["warn","Draft"];
-      if(s.toLowerCase() === "archived") return ["bad","Archived"];
-      return ["neutral", s || DEFAULT_STATUS];
-    }
-
-    function byIdNumeric(a,b){
-      // expects ATA-YYYY-NNNN; fallback lexical
-      const re = /(\d{4})-(\d+)/;
-      const ma = String(a.id||"").match(re);
-      const mb = String(b.id||"").match(re);
-      if(ma && mb){
-        const ya = Number(ma[1]), yb = Number(mb[1]);
-        const na = Number(ma[2]), nb = Number(mb[2]);
-        if(ya !== yb) return ya - yb;
-        return na - nb;
-      }
-      return String(a.id||"").localeCompare(String(b.id||""));
-    }
-
-    function repoUrlGuess(){
-      // Best effort: turn current Pages URL into repo URL (works for many GitHub Pages patterns)
-      // If not detectable, fall back to current origin.
-      const host = location.host;
-      const parts = location.pathname.split("/").filter(Boolean);
-      // user.github.io/repo/
-      if(host.endsWith("github.io") && parts.length >= 1){
-        const user = host.replace(".github.io","");
-        const repo = parts[0];
-        return `https://github.com/${user}/${repo}`;
-      }
-      return "https://github.com/";
-    }
-
-    function buildEntryCard(e){
-      const [klass,label] = statusBadge(e.status);
-      const tags = Array.isArray(e.tags) ? e.tags : [];
-      const chips = tags.slice(0,3).map(t=>`<span class="chip">${escapeHtml(t)}</span>`).join("");
-      const jurisdiction = e.jurisdiction ? `<span class="chip">${escapeHtml(e.jurisdiction)}</span>` : "";
-      const cls = e.classification ? `<span class="chip">${escapeHtml(e.classification)}</span>` : "";
-      const updated = e.updated ? escapeHtml(e.updated) : "—";
-      return `
-        <div class="entry" data-id="${escapeHtml(e.id)}">
-          <div class="top">
-            <div class="eid">${escapeHtml(e.id)}</div>
-            <div class="badge ${klass}"><span class="dot"></span>${escapeHtml(label)}</div>
-          </div>
-          <div class="title">${escapeHtml(e.entity || "Untitled Entity")}</div>
-          <div class="meta">
-            ${cls}
-            ${jurisdiction}
-            ${chips}
-          </div>
-          <div class="foot">
-            <div>Updated: ${updated}</div>
-            <a class="link" href="${escapeHtml(e.path || "#")}" target="_blank" rel="noreferrer">Source</a>
-          </div>
-        </div>
-      `;
-    }
-
-    // ====== State ======
-    let registry = { updated: null, entries: [] };
-    let view = [];
-
-    // ====== Load registry ======
     async function loadRegistry(){
-      const repo = repoUrlGuess();
-      $("btnRepo").href = repo;
-
-      // Try to discover verifier route
-      $("btnOpenVerifier").onclick = () => {
-        // If there is a verifier site, open it. Otherwise open repo /verifier folder.
-        const candidate = location.origin + location.pathname.replace(/\/+$/,"") + "/verifier/";
-        window.open(candidate, "_blank", "noreferrer");
-      };
-
       try{
-        const res = await fetch(REGISTRY_URL, { cache: "no-store" });
-        if(!res.ok) throw new Error("Registry JSON missing");
+        const res = await fetch("./registry/index.json", { cache:"no-store" });
+        if(!res.ok) throw new Error("missing registry/index.json");
         const data = await res.json();
-        registry.updated = data.updated || null;
-        registry.entries = Array.isArray(data.entries) ? data.entries : [];
-        $("statStatus").textContent = "Live";
-        $("statStatusSub").textContent = "Loaded /registry/index.json";
-        $("sourceLine").textContent = "Source: /registry/index.json";
-      }catch(err){
-        // Fallback demo
-        registry.updated = new Date().toISOString().slice(0,10);
-        registry.entries = FALLBACK_ENTRIES;
-        $("statStatus").textContent = "Demo";
-        $("statStatusSub").textContent = "Add /registry/index.json to go live";
-        $("sourceLine").textContent = "Source: fallback demo (missing registry/index.json)";
+        REG = data;
+        demoBox.classList.add("hidden");
+        modeChip.textContent = "live";
+        render();
+      }catch(e){
+        REG = demoData;
+        demoBox.classList.remove("hidden");
+        modeChip.textContent = "demo";
+        render();
       }
-
-      $("statCount").textContent = String(registry.entries.length);
-      $("statUpdated").textContent = "Updated: " + (registry.updated || "—");
-      $("total").textContent = String(registry.entries.length);
-      $("footMono").textContent = `Build: ${location.host}${location.pathname} • ${registry.updated ? "Registry "+registry.updated : "Registry"}`;
-
-      apply();
     }
 
-    // ====== Filter/sort/search ======
-    function apply(){
-      const q = $("q").value.trim().toLowerCase();
-      const st = $("status").value;
-      const sort = $("sort").value;
+    function norm(s){ return (s||"").toString().toLowerCase(); }
+    function statusClass(s){
+      const v = norm(s);
+      if(v.includes("verified")) return "ok";
+      if(v.includes("flag") || v.includes("risk")) return "bad";
+      return "";
+    }
 
-      let arr = registry.entries.slice();
+    function makeCard(entry){
+      const id = entry.id || "ATA-YYYY-NNNN";
+      const entity = entry.entity || "Unknown Entity";
+      const type = entry.type || "—";
+      const juris = entry.primary_jurisdiction || "—";
+      const ops = entry.operations || "—";
+      const status = entry.status || "Unverified";
+      const sectors = Array.isArray(entry.sector) ? entry.sector : [];
+      const src = entry.source || "";
 
-      if(st){
-        arr = arr.filter(e => String(e.status || DEFAULT_STATUS) === st);
-      }
-      if(q){
-        arr = arr.filter(e => {
-          const hay = [
-            e.id, e.entity, e.classification, e.jurisdiction,
-            ...(Array.isArray(e.tags)?e.tags:[])
-          ].join(" ").toLowerCase();
-          return hay.includes(q);
-        });
-      }
+      const card = document.createElement("div");
+      card.className = "card";
+      card.id = id;
 
-      // sort
-      if(sort === "new"){
-        arr.sort((a,b)=> byIdNumeric(b,a));
-      }else if(sort === "old"){
-        arr.sort(byIdNumeric);
-      }else if(sort === "az"){
-        arr.sort((a,b)=> String(a.entity||"").localeCompare(String(b.entity||"")));
-      }else if(sort === "za"){
-        arr.sort((a,b)=> String(b.entity||"").localeCompare(String(a.entity||"")));
-      }
+      const left = document.createElement("div");
+      left.className = "left";
 
-      view = arr;
-      render();
+      const idrow = document.createElement("div");
+      idrow.className = "idrow";
+
+      const idpill = document.createElement("div");
+      idpill.className = "id";
+      idpill.textContent = id;
+
+      const st = document.createElement("div");
+      st.className = "status " + statusClass(status);
+      st.innerHTML = `<span class="sdot"></span><span>${status}</span>`;
+
+      idrow.appendChild(idpill);
+      idrow.appendChild(st);
+
+      const h = document.createElement("div");
+      h.className = "entity";
+      h.textContent = entity;
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `${type} • ${juris} (Primary), ${ops} Operations`;
+
+      const tagrow = document.createElement("div");
+      tagrow.className = "tagrow";
+      sectors.forEach(t=>{
+        const tag = document.createElement("div");
+        tag.className = "tag";
+        tag.textContent = t;
+        tagrow.appendChild(tag);
+      });
+
+      left.appendChild(idrow);
+      left.appendChild(h);
+      left.appendChild(meta);
+      left.appendChild(tagrow);
+
+      const right = document.createElement("div");
+      right.className = "right";
+
+      const citeBtn = document.createElement("button");
+      citeBtn.className = "smallbtn gold";
+      citeBtn.textContent = "Copy citation";
+      citeBtn.onclick = () => copyCitationFor(entry);
+
+      const srcBtn = document.createElement("a");
+      srcBtn.className = "smallbtn";
+      srcBtn.textContent = "Source";
+      srcBtn.href = src || "#";
+      srcBtn.target = "_blank";
+      srcBtn.rel = "noreferrer";
+      if(!src) srcBtn.onclick = (ev)=>{ ev.preventDefault(); };
+
+      right.appendChild(citeBtn);
+      right.appendChild(srcBtn);
+
+      card.appendChild(left);
+      card.appendChild(right);
+
+      return card;
     }
 
     function render(){
-      $("shown").textContent = String(view.length);
-      const list = $("list");
-      const empty = $("empty");
+      const q = norm(document.getElementById("q").value);
+      const sf = document.getElementById("statusFilter").value;
 
-      if(view.length === 0){
-        list.innerHTML = "";
-        empty.style.display = "block";
-        empty.innerHTML = `
-          <b>No matches.</b><br/>
-          Add more entries to <code>/registry/index.json</code> or loosen filters.
-          <div style="margin-top:10px; color:rgba(255,255,255,.70)">
-            Required format:
-            <pre><code>{
-  "updated": "YYYY-MM-DD",
-  "entries": [
-    {"id":"ATA-2026-0005","entity":"Meta Platforms, Inc.","status":"Unverified","path":"registry/ATA-2026-0005-META.md"}
-  ]
-}</code></pre>
-          </div>
-        `;
-        return;
-      }
-      empty.style.display = "none";
-      list.innerHTML = view.map(buildEntryCard).join("");
-
-      // bind click
-      [...list.querySelectorAll(".entry")].forEach(el=>{
-        el.addEventListener("click", ()=>{
-          const id = el.getAttribute("data-id");
-          const e = view.find(x => String(x.id) === String(id));
-          if(e) openEntry(e);
-        });
+      const entries = (REG && Array.isArray(REG.entries)) ? REG.entries : [];
+      const filtered = entries.filter(e=>{
+        const hay = [
+          e.id, e.entity, e.type, e.primary_jurisdiction, e.operations,
+          ...(Array.isArray(e.sector)? e.sector: []),
+          e.status
+        ].map(norm).join(" ");
+        const matchesQ = !q || hay.includes(q);
+        const st = norm(e.status);
+        const matchesS =
+          sf === "all" ||
+          (sf === "unverified" && st.includes("unverified")) ||
+          (sf === "verified" && st.includes("verified")) ||
+          (sf === "flagged" && (st.includes("flag") || st.includes("risk")));
+        return matchesQ && matchesS;
       });
+
+      listEl.innerHTML = "";
+      filtered.forEach(e=> listEl.appendChild(makeCard(e)));
+
+      countEl.textContent = filtered.length.toString();
+      updatedEl.textContent = (REG.updated || "—");
+      citePatternEl.textContent = (REG.citation_pattern || "APEX-ATA • ATA-YYYY-NNNN");
     }
 
-    // ====== Modal ======
-    async function openEntry(e){
-      const url = e.path || "#";
-      $("btnOpenMd").href = url;
-
-      const [klass,label] = statusBadge(e.status);
-      const tags = Array.isArray(e.tags) ? e.tags : [];
-      const metaBits = [
-        `<span class="badge ${klass}" style="padding:5px 9px"><span class="dot"></span>${escapeHtml(label)}</span>`,
-        `<span class="chip">${escapeHtml(e.id || "")}</span>`,
-        e.classification ? `<span class="chip">${escapeHtml(e.classification)}</span>` : "",
-        e.jurisdiction ? `<span class="chip">${escapeHtml(e.jurisdiction)}</span>` : "",
-        e.updated ? `<span class="chip">Updated: ${escapeHtml(e.updated)}</span>` : ""
-      ].filter(Boolean).join("");
-
-      $("modalTitle").textContent = e.entity || e.id || "Entry";
-      $("modalMeta").innerHTML = metaBits;
-
-      $("btnCopyEntryCite").onclick = () => copyCitation(e);
-      $("btnCopyLink").onclick = async () => {
-        const link = location.origin + location.pathname.replace(/\/+$/,"") + `/#${encodeURIComponent(e.id||"")}`;
-        await navigator.clipboard.writeText(link);
-        toast("Link copied");
-      };
-
-      // load md if possible
-      $("md").innerHTML = "<p style='color:rgba(255,255,255,.70)'>Loading entry…</p>";
-      showModal(true);
-
+    async function copyToClipboard(text){
       try{
-        if(url && url !== "#"){
-          const res = await fetch(url, { cache: "no-store" });
-          if(!res.ok) throw new Error("md fetch failed");
-          const md = await res.text();
-          $("md").innerHTML = renderMarkdown(md);
-        }else{
-          $("md").innerHTML = "<p style='color:rgba(255,255,255,.70)'>No source path provided.</p>";
-        }
-      }catch(err){
-        $("md").innerHTML = `
-          <blockquote>Preview unavailable from this path on this domain.</blockquote>
-          <p style="color:rgba(255,255,255,.72)">
-            Open the source directly: <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(url)}</a>
-          </p>
-        `;
-      }
-
-      // anchor in URL
-      if(e.id){
-        history.replaceState(null, "", `#${encodeURIComponent(e.id)}`);
+        await navigator.clipboard.writeText(text);
+        pulseStatus("COPIED", true);
+      }catch{
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        pulseStatus("COPIED", true);
       }
     }
 
-    function showModal(on){
-      const mw = $("modalWrap");
-      mw.style.display = on ? "block" : "none";
-      mw.setAttribute("aria-hidden", on ? "false" : "true");
+    function copyCitationFor(entry){
+      const id = entry.id || "ATA-YYYY-NNNN";
+      const path = `registry/index.json`;
+      const base = location.origin + location.pathname.replace(/\/[^\/]*$/, "/");
+      const src = entry.source ? `Source: ${entry.source}` : "";
+      const citation = `APEX-ATA • ${id} • ${base}${path} • commit=git-history` + (src ? ` • ${src}` : "");
+      copyToClipboard(citation);
     }
 
-    $("btnClose").addEventListener("click", ()=> showModal(false));
-    $("modalWrap").addEventListener("click", (ev)=>{
-      if(ev.target === $("modalWrap")) showModal(false);
-    });
-    window.addEventListener("keydown",(ev)=>{
-      if(ev.key === "Escape") showModal(false);
-    });
+    const pillStatus = document.getElementById("pillStatus");
+    const statusText = document.getElementById("statusText");
+    const statusDot = document.getElementById("statusDot");
 
-    // ====== Citation ======
-    async function copyCitation(e){
-      const id = e?.id || "ATA-YYYY-NNNN";
-      const entity = e?.entity || "Entity";
-      const path = e?.path || "registry/ENTRY.md";
-      const repo = $("btnRepo").href || repoUrlGuess();
-      const txt =
-`APEX-ATA Ledger — ${id}
-Entity: ${entity}
-Source: ${path}
-Repo: ${repo}
-Anchor: ${location.origin + location.pathname.replace(/\/+$/,"") + "/#" + encodeURIComponent(id)}`;
-      await navigator.clipboard.writeText(txt);
-      toast("Citation copied");
+    function pulseStatus(text, ok){
+      statusText.textContent = text;
+      statusDot.style.background = ok ? "var(--ok)" : "var(--warn)";
+      setTimeout(()=>{
+        statusText.textContent = "READY";
+        statusDot.style.background = "var(--ok)";
+      }, 1200);
     }
 
-    $("btnCopyCite").addEventListener("click", async ()=>{
-      await copyCitation({id:"ATA-YYYY-NNNN", entity:"Entity Name", path:"registry/ATA-YYYY-NNNN-ENTITY.md"});
-    });
+    document.getElementById("copyCitation").onclick = () => {
+      const pat = (REG && REG.citation_pattern) ? REG.citation_pattern : "APEX-ATA • ATA-YYYY-NNNN";
+      copyToClipboard(pat);
+    };
 
-    // ====== Controls ======
-    $("q").addEventListener("input", apply);
-    $("status").addEventListener("change", apply);
-    $("sort").addEventListener("change", apply);
-    $("btnReset").addEventListener("click", ()=>{
-      $("q").value = "";
-      $("status").value = "";
-      $("sort").value = "new";
-      apply();
-      toast("Reset");
-    });
+    document.getElementById("q").addEventListener("input", render);
+    document.getElementById("statusFilter").addEventListener("change", render);
 
-    // Jump
-    $("btnJump").addEventListener("click", ()=>{
-      const id = $("jumpId").value.trim();
-      if(!id){ toast("Enter an ID"); return; }
-      const e = registry.entries.find(x => String(x.id).toLowerCase() === id.toLowerCase());
-      if(!e){ toast("Not found in loaded registry"); return; }
-      openEntry(e);
-    });
+    document.getElementById("jumpBtn").onclick = () => {
+      const v = (document.getElementById("jumpId").value || "").trim();
+      if(!v) return;
+      location.hash = "#" + encodeURIComponent(v).replace(/%/g,"");
+      const el = document.getElementById(v);
+      if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+      pulseStatus("JUMP", true);
+    };
 
-    // ====== Hash deep-link ======
-    function openFromHash(){
-      const raw = decodeURIComponent((location.hash||"").replace("#","")).trim();
-      if(!raw) return;
-      const e = registry.entries.find(x => String(x.id).toLowerCase() === raw.toLowerCase());
-      if(e) openEntry(e);
-    }
-
-    // ====== Boot ======
-    loadRegistry().then(()=> openFromHash());
-
+    // Boot
+    loadRegistry();
   </script>
 </body>
 </html>
