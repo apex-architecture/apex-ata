@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>APEX ATA Ledger — Immutable Verdict Registry</title>
+  <meta name="description" content="An immutable registry of APEX regulatory verdicts and citations. Audit trail. Authority surface."/>
+
+  <style>
+    :root{
+      --bg0:#05070B; --bg1:#070A12;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.035);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(214,179,90,.22);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.62);
+      --muted2: rgba(255,255,255,.45);
+      --gold:#D6B35A; --gold2:#B99233;
+      --blue:#6AA8FF;
+      --ok:#34D399; --warn:#FBBF24; --bad:#FB7185;
+      --shadow: 0 22px 80px rgba(0,0,0,.55);
+      --radius: 22px; --radius2: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(106,168,255,.16), transparent 60%),
+        radial-gradient(1000px 700px at 95% 5%, rgba(214,179,90,.14), transparent 60%),
+        radial-gradient(1000px 800px at 50% 120%, rgba(106,168,255,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    /* Sigil + haze */
+    body:before{
+      content:"";
+      position:fixed;
+      inset:-20%;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(214,179,90,.12), transparent 45%),
+        radial-gradient(circle at 70% 30%, rgba(106,168,255,.10), transparent 45%),
+        radial-gradient(circle at 50% 60%, rgba(255,255,255,.06), transparent 55%),
+        url("apex-sigil.png");
+      background-repeat:no-repeat;
+      background-size: 1100px auto;
+      background-position: 50% 22%;
+      opacity:.22;
+      filter: blur(0.2px) saturate(1.1);
+      pointer-events:none;
+      z-index:-2;
+      transform: translateZ(0);
+    }
+
+    /* Moving star particles */
+    body:after{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,.08) 1px, transparent 1.2px),
+        radial-gradient(circle at 65% 55%, rgba(255,255,255,.06) 1px, transparent 1.2px),
+        radial-gradient(circle at 80% 25%, rgba(255,255,255,.05) 1px, transparent 1.2px);
+      background-size: 220px 220px, 260px 260px, 320px 320px;
+      opacity:.22;
+      pointer-events:none;
+      z-index:-1;
+      animation: drift 18s linear infinite;
+      transform: translateZ(0);
+    }
+    @keyframes drift{
+      from{transform:translate3d(0,0,0)}
+      to{transform:translate3d(-120px, 80px,0)}
+    }
+
+    a{color:inherit}
+    .wrap{max-width:1120px;margin:0 auto;padding:26px 16px 70px}
+
+    /* Topbar (unified) */
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .sig{
+      width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(circle at 35% 30%, rgba(214,179,90,.35), transparent 55%),
+        radial-gradient(circle at 70% 70%, rgba(106,168,255,.35), transparent 55%),
+        linear-gradient(135deg, rgba(214,179,90,.18), rgba(106,168,255,.12));
+      box-shadow: 0 12px 34px rgba(0,0,0,.35);
+      position:relative; overflow:hidden;
+    }
+    .sig:after{
+      content:""; position:absolute; inset:-40%;
+      background: conic-gradient(from 180deg, rgba(214,179,90,.0), rgba(214,179,90,.38), rgba(106,168,255,.32), rgba(214,179,90,.0));
+      animation: spin 12s linear infinite; opacity:.85;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .brand h1{
+      margin:0;font-size:13px;letter-spacing:.18em;text-transform:uppercase;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .brand .sub{
+      margin-top:3px;font-size:12px;color:var(--muted);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+
+    .pillrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .pill{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 12px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 26px rgba(0,0,0,.30);
+      font-size:12px; user-select:none;
+      text-decoration:none;
+    }
+    .dot{width:9px;height:9px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px rgba(106,168,255,.12)}
+    .dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(52,211,153,.12)}
+    .dot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(251,191,36,.12)}
+    .dot.bad{background:var(--bad);box-shadow:0 0 0 4px rgba(251,113,133,.12)}
+    .mono{font-family:var(--mono)}
+    .gold{color:rgba(214,179,90,.95);font-weight:900}
+
+    /* Panels */
+    .panel{
+      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(900px 340px at 15% 15%, rgba(214,179,90,.16), transparent 60%),
+        radial-gradient(900px 360px at 88% 20%, rgba(106,168,255,.14), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+      transform: translateZ(0);
+    }
+    .panel:before{
+      content:""; position:absolute; inset:0;
+      background: linear-gradient(90deg, rgba(214,179,90,.0), rgba(214,179,90,.10), rgba(106,168,255,.10), rgba(214,179,90,.0));
+      opacity:.45; transform: translateX(-45%);
+      animation: sweep 8s ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes sweep{0%,100%{transform:translateX(-45%)}50%{transform:translateX(45%)}}
+
+    .hero{padding:22px 18px 16px}
+    .heroTop{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .hero h2{margin:0;font-size:28px;letter-spacing:.06em;text-transform:uppercase;line-height:1.05}
+    .hero h2 span{
+      background: linear-gradient(90deg, var(--gold), rgba(255,255,255,.96), var(--blue));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .hero p{margin:10px 0 0;color:rgba(255,255,255,.82);font-size:13px;line-height:1.45;max-width:860px}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px}
+    .btn{
+      border:none;cursor:pointer;border-radius:14px;padding:11px 14px;
+      font-weight:900;font-size:13px;letter-spacing:.02em;
+      color: rgba(10,12,16,.95);
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      box-shadow: 0 16px 34px rgba(214,179,90,.18);
+      transition: transform .10s ease, filter .10s ease;
+    }
+    .btn:hover{transform: translateY(-1px); filter: brightness(1.03)}
+    .btn:active{transform: translateY(0px); filter: brightness(.98)}
+    .btn2{
+      cursor:pointer;border-radius:14px;padding:11px 14px;
+      font-weight:900;font-size:13px;color:rgba(255,255,255,.90);
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(10px);
+      transition: transform .10s ease, border-color .10s ease;
+    }
+    .btn2:hover{transform: translateY(-1px); border-color: rgba(214,179,90,.35)}
+    .btn2:active{transform: translateY(0px)}
+
+    .chip{
+      display:inline-flex;gap:8px;align-items:center;
+      padding:10px 12px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
+      font-size:12px;color:var(--muted);
+    }
+
+    /* Layout */
+    .grid{display:grid;gap:12px;margin-top:12px}
+    @media(min-width: 980px){ .grid{grid-template-columns: 1.2fr .8fr;} }
+
+    .card{
+      border-radius: var(--radius2);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 16px 34px rgba(0,0,0,.25);
+      padding:14px;
+      position:relative;
+      overflow:hidden;
+      transform: translateZ(0);
+    }
+
+    /* Controls */
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .controlLeft{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .search{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 12px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      min-width:min(520px, 92vw);
+      box-shadow: 0 10px 24px rgba(0,0,0,.24);
+    }
+    .search input{
+      width:100%;
+      background:transparent;border:none;outline:none;
+      color: rgba(255,255,255,.90);
+      font-size:13px;
+    }
+    .search input::placeholder{color: rgba(255,255,255,.45)}
+    select{
+      appearance:none;-webkit-appearance:none;
+      background: rgba(0,0,0,.20);
+      border:1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.90);
+      padding:10px 12px;
+      border-radius:14px;
+      font-size:13px;
+      cursor:pointer;
+    }
+
+    /* Table */
+    .tableWrap{overflow:auto;max-height:62vh;border-radius:16px;border:1px solid rgba(255,255,255,.10)}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{
+      text-align:left;
+      font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+      color: rgba(255,255,255,.58);
+      padding:14px 14px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.22);
+      position:sticky; top:0; z-index:5;
+      cursor:pointer; user-select:none;
+    }
+    tbody td{
+      padding:12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      color: rgba(255,255,255,.88);
+      vertical-align:top;
+    }
+    tbody tr:hover{background: rgba(106,168,255,.06)}
+    .muted{color:var(--muted)}
+    .nowrap{white-space:nowrap}
+
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      white-space:nowrap;
+    }
+    .tag{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      white-space:nowrap;
+      color: rgba(255,255,255,.84);
+    }
+    .sevDot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(52,211,153,.10)}
+    .sevDot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(251,191,36,.10)}
+    .sevDot.bad{background:var(--bad);box-shadow:0 0 0 4px rgba(251,113,133,.10)}
+
+    /* Detail view */
+    .kv{display:grid;gap:10px;margin-top:10px}
+    .k{
+      border-radius:14px;border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      padding:12px;
+    }
+    .k .t{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.58)}
+    .k .v{margin-top:8px;font-weight:900}
+    .v.dim{color:rgba(255,255,255,.75)}
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family: var(--mono);
+      font-size:12.5px;
+      line-height:1.45;
+      color: rgba(255,255,255,.90);
+    }
+    .divider{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
+
+    .empty{
+      padding:22px 14px;
+      color: var(--muted);
+      text-align:center;
+      line-height:1.5;
+    }
+    .error{
+      margin-top:12px;
+      padding:14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(251,113,133,.07);
+      color: rgba(255,255,255,.90);
+      font-size:12px;
+    }
+
+    /* subtle 3D hover */
+    .panel, .pill, .btn2, .search, .card, .tableWrap{
+      transform-style:preserve-3d;
+    }
+    .tilt:hover{transform: perspective(900px) rotateX(1.1deg) rotateY(-1.2deg)}
+
+    @media (max-width: 520px){
+      .hero h2{font-size:22px}
+      .search{min-width:100%}
+      .pillrow{justify-content:flex-start}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="sig" aria-hidden="true"></div>
+        <div style="min-width:0">
+          <h1>APEX ATA LEDGER</h1>
+          <div class="sub">Immutable Verdict Registry • Citation Surface • Audit Trail</div>
+        </div>
+      </div>
+
+      <div class="pillrow">
+        <div class="pill tilt"><span class="dot ok" id="liveDot"></span><span id="liveText">LIVE</span></div>
+        <div class="pill tilt"><span class="mono" id="lastUpdated">Last updated: —</span></div>
+        <a class="pill tilt" href="https://kawal393.github.io/" rel="noopener">
+          <span class="muted">APEX</span>&nbsp;<span class="gold">PORTAL</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- HERO -->
+    <section class="panel hero tilt">
+      <div class="heroTop">
+        <h2><span>Authority</span> Ledger</h2>
+        <div class="chip">Mode: <span class="mono" style="color:rgba(255,255,255,.88)">Public Surface (Delayed)</span></div>
+      </div>
+      <p>
+        This registry is append-only. Each entry is a timestamped record of an APEX verdict.
+        Institutions cite entries. Operators track drift. The record is the weapon — not persuasion.
+      </p>
+
+      <div class="row">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn" id="loadBtn">Load Ledger</button>
+          <button class="btn2" id="refreshBtn">Force Refresh</button>
+          <button class="btn2" id="copyCiteBtn">Copy Citation</button>
+        </div>
+        <div class="chip">Entries: <span class="mono" id="count" style="color:rgba(255,255,255,.88)">0</span></div>
+      </div>
+    </section>
+
+    <div class="grid">
+
+      <!-- LEDGER TABLE -->
+      <section class="card tilt">
+        <div class="controls">
+          <div class="controlLeft">
+            <div class="search" role="search">
+              <span class="muted">⌕</span>
+              <input id="q" placeholder="Search ATA ID, sector, title, entity, keywords…" autocomplete="off"/>
+            </div>
+
+            <select id="sectorFilter" title="Filter by sector">
+              <option value="all">All Sectors</option>
+            </select>
+
+            <select id="sevFilter" title="Filter by severity">
+              <option value="all">All Severity</option>
+              <option value="bad">High</option>
+              <option value="warn">Medium</option>
+              <option value="ok">Low</option>
+            </select>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+            <a class="btn2" id="dataLink" href="./docs/ata.json">View raw ata.json</a>
+            <button class="btn2" id="downloadBtn">Download JSON</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th data-key="id">ATA ID</th>
+                <th data-key="sector">Sector</th>
+                <th data-key="title">Title</th>
+                <th data-key="entity">Entity</th>
+                <th data-key="severity">Severity</th>
+                <th data-key="ts" class="nowrap">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div class="empty" id="empty" style="display:none">No entries match your filters.</div>
+        </div>
+
+        <div class="error" id="err" style="display:none"></div>
+
+        <div class="divider"></div>
+
+        <div class="muted" style="font-size:12px">
+          Tip: click a row to open the full entry. Click headers to sort.
+        </div>
+      </section>
+
+      <!-- DETAIL PANEL -->
+      <section class="card tilt" id="detailCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.58)">
+              Entry View
+            </div>
+            <div style="margin-top:6px;font-size:18px;font-weight:900;letter-spacing:.02em" id="d_title">
+              Select an entry
+            </div>
+          </div>
+          <span class="tag" id="d_badge"><span class="sevDot"></span><span class="mono">—</span></span>
+        </div>
+
+        <div class="kv">
+          <div class="k">
+            <div class="t">ATA ID</div>
+            <div class="v mono" id="d_id">—</div>
+          </div>
+          <div class="k">
+            <div class="t">Sector</div>
+            <div class="v dim" id="d_sector">—</div>
+          </div>
+          <div class="k">
+            <div class="t">Entity</div>
+            <div class="v dim" id="d_entity">—</div>
+          </div>
+          <div class="k">
+            <div class="t">Timestamp</div>
+            <div class="v dim mono" id="d_ts">—</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.58)">
+            APEX Verdict (recorded)
+          </div>
+          <button class="btn2" id="copyEntryBtn">Copy Entry</button>
+        </div>
+
+        <div style="margin-top:10px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.16);padding:12px">
+          <pre id="d_body">Select an entry to reveal the record.</pre>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn2" id="openHashBtn">Share Link</button>
+          <button class="btn2" id="clearSelBtn">Clear</button>
+        </div>
+
+        <div class="muted" style="font-size:12px;margin-top:12px;line-height:1.5">
+          Surface Nodes:
+          <a href="https://kawal393.github.io/apex-corporate-translator/">APEX Corporate Translator</a> •
+          <a href="https://kawal393.github.io/ndis-signal-board/">APEX NDIS Watchtower</a> •
+          <a href="https://kawal393.github.io/-APEX-GHOST-PROTOCOL/">APEX Ghost Protocol</a>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="muted" style="font-size:12px;line-height:1.6;margin-top:14px;padding:0 4px">
+      This is a public surface. Institutional access removes delay and enables API queries.
+      <br/>© 2026 APEX • <span class="gold">The record becomes gravity.</span>
+    </div>
+
+  </div>
+
+<script>
+(() => {
+  const DATA_URL = "./docs/ata.json"; // optional: create /docs/ata.json later
+  const $ = (id) => document.getElementById(id);
+
+  const state = {
+    raw: [],
+    rows: [],
+    sortKey: "ts",
+    sortDir: "desc",
+    selectedId: null
+  };
+
+  const sample = [
+    {
+      id: "ATA-2026-0001",
+      ts: "2026-02-06 07:10",
+      sector: "NDIS",
+      title: "Enforcement signal spike — provider cluster",
+      entity: "NDIS Provider Group (AU)",
+      severity: "warn",
+      body: "• Tier: Hold\n• Confidence: Medium\n• Why: Enforcement pattern is clustering | New conditions language appearing | Time-to-notice is compressing\n• Next Cheapest Test: Request their internal audit schedule + last compliance remediation date.\n• Kill Rule: If they refuse specifics twice, assume optics > reality and drop."
+    },
+    {
+      id: "ATA-2026-0002",
+      ts: "2026-02-06 07:18",
+      sector: "AI / Compliance",
+      title: "EU AI Act deadline proximity — governance exposure",
+      entity: "Large operator class",
+      severity: "bad",
+      body: "• Tier: Advance\n• Confidence: High\n• Why: Deadline-driven governance scramble | Vendor claims outpacing controls | Audit trails absent by default\n• Next Cheapest Test: Ask for model inventory + DPIA / impact assessment artifacts.\n• Kill Rule: If they cannot produce inventory within 14 days, they are non-compliant in practice."
+    },
+    {
+      id: "ATA-2026-0003",
+      ts: "2026-02-06 07:25",
+      sector: "Infrastructure",
+      title: "Grid constraint drift — site viability compression",
+      entity: "Large load projects",
+      severity: "warn",
+      body: "• Tier: Hold\n• Confidence: Medium\n• Why: Constraint maps shifting | Queue priority hidden behind paperwork | Transmission timeline slip risk\n• Next Cheapest Test: Identify exact connection point + MW requirement + committed timeline in writing.\n• Kill Rule: If timeline shifts twice without reasons, reprice feasibility as 'No-Go'."
+    }
+  ];
+
+  function norm(v){ return (v===null||v===undefined) ? "" : String(v).trim(); }
+
+  function sanitize(text){
+    return norm(text)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function toDate(v){
+    if(!v) return null;
+    const d = new Date(v);
+    if(!isNaN(d)) return d;
+    const s = String(v).trim().replace(" ", "T");
+    const d2 = new Date(s);
+    return isNaN(d2) ? null : d2;
+  }
+
+  function fmtDate(d){
+    if(!d) return "—";
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    const hh = String(d.getHours()).padStart(2,"0");
+    const mm = String(d.getMinutes()).padStart(2,"0");
+    return `${y}-${m}-${day} ${hh}:${mm}`;
+  }
+
+  function sevDotClass(s){
+    if(s === "bad") return "sevDot bad";
+    if(s === "warn") return "sevDot warn";
+    return "sevDot";
+  }
+  function sevLabel(s){
+    if(s === "bad") return "High";
+    if(s === "warn") return "Medium";
+    return "Low";
+  }
+
+  function buildRow(o){
+    const id = norm(o.id || o.ata_id || "");
+    const sector = norm(o.sector || o.domain || "—");
+    const title = norm(o.title || o.headline || "—");
+    const entity = norm(o.entity || o.subject || "—");
+    const severity = norm(o.severity || o.risk || "ok").toLowerCase();
+    const tsRaw = norm(o.ts || o.timestamp || o.date || "");
+    const ts = toDate(tsRaw);
+    const body = norm(o.body || o.verdict || o.text || "");
+    const searchable = `${id} ${sector} ${title} ${entity} ${tsRaw} ${body}`.toLowerCase();
+
+    return { id, sector, title, entity, severity: (severity==="bad"||severity==="warn"||severity==="ok") ? severity : "ok", ts, tsText: fmtDate(ts), body, _search: searchable };
+  }
+
+  function fillSector(rows){
+    const sel = $("sectorFilter");
+    const set = new Set();
+    rows.forEach(r => set.add(r.sector));
+    const sectors = Array.from(set).filter(Boolean).sort((a,b)=>a.localeCompare(b));
+    sel.innerHTML = `<option value="all">All Sectors</option>` + sectors.map(s => `<option value="${sanitize(s)}">${sanitize(s)}</option>`).join("");
+  }
+
+  function rankSev(s){ return s==="bad" ? 3 : (s==="warn" ? 2 : 1); }
+
+  function sortRows(rows){
+    const {sortKey, sortDir} = state;
+    const dir = sortDir === "asc" ? 1 : -1;
+
+    const val = (r) => {
+      if(sortKey === "id") return r.id;
+      if(sortKey === "sector") return r.sector;
+      if(sortKey === "title") return r.title;
+      if(sortKey === "entity") return r.entity;
+      if(sortKey === "severity") return r.severity;
+      if(sortKey === "ts") return r.ts ? r.ts.getTime() : 0;
+      return "";
+    };
+
+    return rows.slice().sort((a,b) => {
+      const A = val(a), B = val(b);
+      if(sortKey === "severity") return (rankSev(A) - rankSev(B)) * dir;
+      if(typeof A === "number" && typeof B === "number") return (A - B) * dir;
+      return String(A).localeCompare(String(B)) * dir;
+    });
+  }
+
+  function applyFilters(){
+    const q = norm($("q").value).toLowerCase();
+    const s = $("sectorFilter").value;
+    const sev = $("sevFilter").value;
+
+    let rows = state.rows;
+    if(q) rows = rows.filter(r => r._search.includes(q));
+    if(s !== "all") rows = rows.filter(r => r.sector === s);
+    if(sev !== "all") rows = rows.filter(r => r.severity === sev);
+
+    rows = sortRows(rows);
+    render(rows);
+    $("count").textContent = rows.length;
+    updateLiveDot(rows);
+  }
+
+  function render(rows){
+    const tb = $("tbody");
+    const empty = $("empty");
+
+    if(!rows.length){
+      tb.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    tb.innerHTML = rows.map(r => `
+      <tr data-id="${sanitize(r.id)}" style="cursor:pointer">
+        <td class="mono nowrap">${sanitize(r.id)}</td>
+        <td>${sanitize(r.sector)}</td>
+        <td>${sanitize(r.title)}</td>
+        <td class="muted">${sanitize(r.entity)}</td>
+        <td>
+          <span class="badge">
+            <span class="${sevDotClass(r.severity)}"></span>
+            <span>${sanitize(sevLabel(r.severity))}</span>
+          </span>
+        </td>
+        <td class="mono nowrap">${sanitize(r.tsText)}</td>
+      </tr>
+    `).join("");
+
+    // row click
+    tb.querySelectorAll("tr[data-id]").forEach(tr => {
+      tr.addEventListener("click", () => openEntry(tr.getAttribute("data-id")));
+    });
+  }
+
+  function updateLiveDot(rows){
+    const dot = $("liveDot");
+    const txt = $("liveText");
+
+    const hi = rows.filter(r => r.severity === "bad").length;
+    const med = rows.filter(r => r.severity === "warn").length;
+
+    if(hi > 0){
+      dot.className = "dot bad";
+      txt.textContent = "HIGH SIGNALS";
+    }else if(med > 0){
+      dot.className = "dot warn";
+      txt.textContent = "ACTIVE";
+    }else{
+      dot.className = "dot ok";
+      txt.textContent = "CALM";
+    }
+  }
+
+  function setSort(key){
+    if(state.sortKey === key){
+      state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+    }else{
+      state.sortKey = key;
+      state.sortDir = (key === "title" || key === "sector" || key === "entity" || key === "id") ? "asc" : "desc";
+    }
+    applyFilters();
+  }
+
+  function wireSort(){
+    document.querySelectorAll("thead th[data-key]").forEach(th => {
+      th.addEventListener("click", () => setSort(th.dataset.key));
+    });
+  }
+
+  function copyText(text){
+    navigator.clipboard?.writeText(text).catch(() => {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    });
+  }
+
+  function openEntry(id){
+    const r = state.rows.find(x => x.id === id);
+    if(!r) return;
+
+    state.selectedId = id;
+
+    $("d_title").textContent = r.title || "—";
+    $("d_id").textContent = r.id || "—";
+    $("d_sector").textContent = r.sector || "—";
+    $("d_entity").textContent = r.entity || "—";
+    $("d_ts").textContent = r.tsText || "—";
+    $("d_body").textContent = r.body || "—";
+
+    $("d_badge").innerHTML = `<span class="${sevDotClass(r.severity)}"></span><span class="mono">${sevLabel(r.severity)} SEVERITY</span>`;
+
+    // set hash for sharing
+    history.replaceState(null, "", `#${encodeURIComponent(r.id)}`);
+  }
+
+  function clearSel(){
+    state.selectedId = null;
+    $("d_title").textContent = "Select an entry";
+    $("d_id").textContent = "—";
+    $("d_sector").textContent = "—";
+    $("d_entity").textContent = "—";
+    $("d_ts").textContent = "—";
+    $("d_body").textContent = "Select an entry to reveal the record.";
+    $("d_badge").innerHTML = `<span class="sevDot"></span><span class="mono">—</span>`;
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+
+  function citationFor(id){
+    return `APEX ATA Ledger — ${id}`;
+  }
+
+  function setLastUpdatedFromRows(){
+    const newest = state.rows
+      .map(r => r.ts ? r.ts.getTime() : 0)
+      .reduce((a,b)=>Math.max(a,b), 0);
+
+    const d = newest ? new Date(newest) : new Date();
+    $("lastUpdated").textContent = `Last updated: ${fmtDate(d)}`;
+  }
+
+  function showError(msg){
+    const box = $("err");
+    box.style.display = "block";
+    box.innerHTML = `<b>Load error:</b> ${sanitize(msg)}<div style="margin-top:6px;color:rgba(255,255,255,.65)">If you haven't created <span class="mono">docs/ata.json</span> yet, click “Load Ledger” to use the built-in sample data.</div>`;
+  }
+
+  async function fetchJson(url){
+    const res = await fetch(url, {cache:"no-store"});
+    if(!res.ok) throw new Error(`Failed to fetch ata.json (${res.status})`);
+    return await res.json();
+  }
+
+  async function load(useRemote){
+    $("err").style.display = "none";
+
+    let data;
+    if(useRemote){
+      const url = `${DATA_URL}?v=${Date.now()}`;
+      data = await fetchJson(url);
+    }else{
+      data = sample;
+    }
+
+    const raw = Array.isArray(data) ? data : (Array.isArray(data.entries) ? data.entries : []);
+    state.raw = raw;
+    state.rows = raw.map(buildRow);
+
+    fillSector(state.rows);
+    setLastUpdatedFromRows();
+    applyFilters();
+
+    // auto-open hash
+    try{
+      const hash = decodeURIComponent((location.hash || "").replace("#","")).trim();
+      if(hash){
+        openEntry(hash);
+      }
+    }catch(e){}
+  }
+
+  function wire(){
+    $("q").addEventListener("input", applyFilters);
+    $("sectorFilter").addEventListener("change", applyFilters);
+    $("sevFilter").addEventListener("change", applyFilters);
+
+    $("loadBtn").addEventListener("click", async () => {
+      $("loadBtn").textContent = "Loading…";
+      try{
+        // Try remote first, fall back to sample
+        try{
+          await load(true);
+        }catch(e){
+          await load(false);
+        }
+      }catch(e){
+        showError(e.message || String(e));
+      }finally{
+        $("loadBtn").textContent = "Load Ledger";
+      }
+    });
+
+    $("refreshBtn").addEventListener("click", async () => {
+      $("refreshBtn").textContent = "Refreshing…";
+      try{
+        await load(true);
+      }catch(e){
+        // fallback to sample
+        try{ await load(false); }catch(_) {}
+        showError(e.message || String(e));
+      }finally{
+        $("refreshBtn").textContent = "Force Refresh";
+      }
+    });
+
+    $("copyCiteBtn").addEventListener("click", () => {
+      const id = state.selectedId || (state.rows[0]?.id || "ATA-0000-0000");
+      copyText(citationFor(id));
+    });
+
+    $("copyEntryBtn").addEventListener("click", () => {
+      const id = state.selectedId;
+      if(!id){ alert("Select an entry first."); return; }
+      const r = state.rows.find(x => x.id === id);
+      copyText(`${citationFor(id)}\n\n${r.body}`);
+    });
+
+    $("openHashBtn").addEventListener("click", () => {
+      const id = state.selectedId;
+      if(!id){ alert("Select an entry first."); return; }
+      const url = new URL(location.href);
+      url.hash = encodeURIComponent(id);
+      copyText(url.toString());
+      alert("Link copied.");
+    });
+
+    $("clearSelBtn").addEventListener("click", clearSel);
+
+    $("downloadBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(state.raw.length ? state.raw : sample, null, 2)], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "apex_ata_ledger.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    wireSort();
+  }
+
+  // init
+  wire();
+
+  // auto-load sample instantly so it never looks empty
+  load(false).catch(e => showError(e.message || String(e)));
+})();
+</script>
+</body>
+</html>
