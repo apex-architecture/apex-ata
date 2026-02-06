@@ -1,887 +1,1003 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>APEX ATA Ledger — Immutable Verdict Registry</title>
-  <meta name="description" content="An immutable registry of APEX regulatory verdicts and citations. Audit trail. Authority surface."/>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0b0f19" />
+  <title>APEX-ATA Ledger — Public Registry</title>
+  <meta name="description" content="APEX-ATA Ledger: public registry of attestations and records. Immutable by commit history. Verifiable by source links." />
   <style>
     :root{
-      --bg0:#05070B; --bg1:#070A12;
-      --panel: rgba(255,255,255,.06);
-      --panel2: rgba(255,255,255,.035);
-      --stroke: rgba(255,255,255,.10);
-      --stroke2: rgba(214,179,90,.22);
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.62);
-      --muted2: rgba(255,255,255,.45);
-      --gold:#D6B35A; --gold2:#B99233;
-      --blue:#6AA8FF;
-      --ok:#34D399; --warn:#FBBF24; --bad:#FB7185;
-      --shadow: 0 22px 80px rgba(0,0,0,.55);
-      --radius: 22px; --radius2: 16px;
+      --bg:#070a12;
+      --panel:rgba(255,255,255,.055);
+      --panel2:rgba(255,255,255,.035);
+      --stroke:rgba(255,255,255,.10);
+      --stroke2:rgba(255,255,255,.06);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.62);
+      --muted2:rgba(255,255,255,.46);
+      --good:#31d27c;
+      --warn:#ffcc66;
+      --bad:#ff5d5d;
+      --accent:#c9b37e; /* gold */
+      --accent2:#79a6ff;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius:18px;
+      --radius2:26px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
-      font-family: var(--sans);
-      color: var(--text);
+      font-family:var(--sans);
+      color:var(--text);
       background:
-        radial-gradient(1200px 700px at 10% -10%, rgba(106,168,255,.16), transparent 60%),
-        radial-gradient(1000px 700px at 95% 5%, rgba(214,179,90,.14), transparent 60%),
-        radial-gradient(1000px 800px at 50% 120%, rgba(106,168,255,.10), transparent 60%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
+        radial-gradient(1200px 800px at 20% 12%, rgba(201,179,126,.16), transparent 60%),
+        radial-gradient(1100px 900px at 80% 18%, rgba(121,166,255,.12), transparent 62%),
+        radial-gradient(900px 700px at 55% 85%, rgba(49,210,124,.10), transparent 62%),
+        linear-gradient(180deg, #050712 0%, #070a12 40%, #050712 100%);
       overflow-x:hidden;
     }
-
-    /* Sigil + haze */
-    body:before{
-      content:"";
-      position:fixed;
-      inset:-20%;
-      background:
-        radial-gradient(circle at 30% 20%, rgba(214,179,90,.12), transparent 45%),
-        radial-gradient(circle at 70% 30%, rgba(106,168,255,.10), transparent 45%),
-        radial-gradient(circle at 50% 60%, rgba(255,255,255,.06), transparent 55%),
-        url("apex-sigil.png");
-      background-repeat:no-repeat;
-      background-size: 1100px auto;
-      background-position: 50% 22%;
-      opacity:.22;
-      filter: blur(0.2px) saturate(1.1);
-      pointer-events:none;
-      z-index:-2;
-      transform: translateZ(0);
-    }
-
-    /* Moving star particles */
-    body:after{
-      content:"";
-      position:fixed;
-      inset:0;
-      background:
-        radial-gradient(circle at 20% 30%, rgba(255,255,255,.08) 1px, transparent 1.2px),
-        radial-gradient(circle at 65% 55%, rgba(255,255,255,.06) 1px, transparent 1.2px),
-        radial-gradient(circle at 80% 25%, rgba(255,255,255,.05) 1px, transparent 1.2px);
-      background-size: 220px 220px, 260px 260px, 320px 320px;
-      opacity:.22;
-      pointer-events:none;
-      z-index:-1;
-      animation: drift 18s linear infinite;
-      transform: translateZ(0);
-    }
-    @keyframes drift{
-      from{transform:translate3d(0,0,0)}
-      to{transform:translate3d(-120px, 80px,0)}
-    }
-
     a{color:inherit}
-    .wrap{max-width:1120px;margin:0 auto;padding:26px 16px 70px}
-
-    /* Topbar (unified) */
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
-    .brand{display:flex;align-items:center;gap:12px;min-width:0}
-    .sig{
-      width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
+    .wrap{max-width:1180px;margin:0 auto;padding:22px 16px 70px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:14px;
+      position:sticky;top:0;z-index:40;
+      padding:14px 12px;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(7,10,18,.78), rgba(7,10,18,.46));
+      border-bottom:1px solid var(--stroke2);
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;min-width:240px;
+    }
+    .sigil{
+      width:38px;height:38px;border-radius:12px;
       background:
-        radial-gradient(circle at 35% 30%, rgba(214,179,90,.35), transparent 55%),
-        radial-gradient(circle at 70% 70%, rgba(106,168,255,.35), transparent 55%),
-        linear-gradient(135deg, rgba(214,179,90,.18), rgba(106,168,255,.12));
-      box-shadow: 0 12px 34px rgba(0,0,0,.35);
-      position:relative; overflow:hidden;
+        radial-gradient(circle at 30% 30%, rgba(201,179,126,.55), rgba(201,179,126,.12) 55%, transparent 68%),
+        linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.02));
+      border:1px solid var(--stroke);
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+      overflow:hidden;
+      position:relative;
+      flex:0 0 auto;
     }
-    .sig:after{
-      content:""; position:absolute; inset:-40%;
-      background: conic-gradient(from 180deg, rgba(214,179,90,.0), rgba(214,179,90,.38), rgba(106,168,255,.32), rgba(214,179,90,.0));
-      animation: spin 12s linear infinite; opacity:.85;
-    }
-    @keyframes spin{to{transform:rotate(360deg)}}
+    .sigil img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92}
     .brand h1{
-      margin:0;font-size:13px;letter-spacing:.18em;text-transform:uppercase;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      font-size:14px;letter-spacing:.12em;text-transform:uppercase;margin:0;line-height:1.2;
+      color:rgba(255,255,255,.88);
     }
     .brand .sub{
-      margin-top:3px;font-size:12px;color:var(--muted);
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      font-size:12px;color:var(--muted);margin-top:2px;line-height:1.2;
     }
-
-    .pillrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-    .pill{
-      display:flex;align-items:center;gap:10px;
-      padding:10px 12px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 26px rgba(0,0,0,.30);
-      font-size:12px; user-select:none;
-      text-decoration:none;
-    }
-    .dot{width:9px;height:9px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px rgba(106,168,255,.12)}
-    .dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(52,211,153,.12)}
-    .dot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(251,191,36,.12)}
-    .dot.bad{background:var(--bad);box-shadow:0 0 0 4px rgba(251,113,133,.12)}
-    .mono{font-family:var(--mono)}
-    .gold{color:rgba(214,179,90,.95);font-weight:900}
-
-    /* Panels */
-    .panel{
-      border-radius: var(--radius);
-      border:1px solid rgba(255,255,255,.12);
-      background:
-        radial-gradient(900px 340px at 15% 15%, rgba(214,179,90,.16), transparent 60%),
-        radial-gradient(900px 360px at 88% 20%, rgba(106,168,255,.14), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-      box-shadow: var(--shadow);
-      position:relative;
-      overflow:hidden;
-      transform: translateZ(0);
-    }
-    .panel:before{
-      content:""; position:absolute; inset:0;
-      background: linear-gradient(90deg, rgba(214,179,90,.0), rgba(214,179,90,.10), rgba(106,168,255,.10), rgba(214,179,90,.0));
-      opacity:.45; transform: translateX(-45%);
-      animation: sweep 8s ease-in-out infinite;
-      pointer-events:none;
-    }
-    @keyframes sweep{0%,100%{transform:translateX(-45%)}50%{transform:translateX(45%)}}
-
-    .hero{padding:22px 18px 16px}
-    .heroTop{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .hero h2{margin:0;font-size:28px;letter-spacing:.06em;text-transform:uppercase;line-height:1.05}
-    .hero h2 span{
-      background: linear-gradient(90deg, var(--gold), rgba(255,255,255,.96), var(--blue));
-      -webkit-background-clip:text; background-clip:text; color:transparent;
-    }
-    .hero p{margin:10px 0 0;color:rgba(255,255,255,.82);font-size:13px;line-height:1.45;max-width:860px}
-
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px}
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
     .btn{
-      border:none;cursor:pointer;border-radius:14px;padding:11px 14px;
-      font-weight:900;font-size:13px;letter-spacing:.02em;
-      color: rgba(10,12,16,.95);
-      background: linear-gradient(135deg, var(--gold), var(--gold2));
-      box-shadow: 0 16px 34px rgba(214,179,90,.18);
-      transition: transform .10s ease, filter .10s ease;
-    }
-    .btn:hover{transform: translateY(-1px); filter: brightness(1.03)}
-    .btn:active{transform: translateY(0px); filter: brightness(.98)}
-    .btn2{
-      cursor:pointer;border-radius:14px;padding:11px 14px;
-      font-weight:900;font-size:13px;color:rgba(255,255,255,.90);
-      background: rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.14);
-      backdrop-filter: blur(10px);
-      transition: transform .10s ease, border-color .10s ease;
-    }
-    .btn2:hover{transform: translateY(-1px); border-color: rgba(214,179,90,.35)}
-    .btn2:active{transform: translateY(0px)}
-
-    .chip{
-      display:inline-flex;gap:8px;align-items:center;
-      padding:10px 12px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
-      backdrop-filter: blur(10px);
-      font-size:12px;color:var(--muted);
-    }
-
-    /* Layout */
-    .grid{display:grid;gap:12px;margin-top:12px}
-    @media(min-width: 980px){ .grid{grid-template-columns: 1.2fr .8fr;} }
-
-    .card{
-      border-radius: var(--radius2);
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 16px 34px rgba(0,0,0,.25);
-      padding:14px;
-      position:relative;
-      overflow:hidden;
-      transform: translateZ(0);
-    }
-
-    /* Controls */
-    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-    .controlLeft{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .search{
-      display:flex;align-items:center;gap:10px;
+      display:inline-flex;align-items:center;gap:10px;
+      border:1px solid var(--stroke);
+      background:linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.03));
       padding:10px 12px;border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.20);
-      min-width:min(520px, 92vw);
-      box-shadow: 0 10px 24px rgba(0,0,0,.24);
-    }
-    .search input{
-      width:100%;
-      background:transparent;border:none;outline:none;
-      color: rgba(255,255,255,.90);
-      font-size:13px;
-    }
-    .search input::placeholder{color: rgba(255,255,255,.45)}
-    select{
-      appearance:none;-webkit-appearance:none;
-      background: rgba(0,0,0,.20);
-      border:1px solid rgba(255,255,255,.12);
-      color: rgba(255,255,255,.90);
-      padding:10px 12px;
-      border-radius:14px;
-      font-size:13px;
+      text-decoration:none;
+      box-shadow: 0 10px 28px rgba(0,0,0,.25);
       cursor:pointer;
-    }
-
-    /* Table */
-    .tableWrap{overflow:auto;max-height:62vh;border-radius:16px;border:1px solid rgba(255,255,255,.10)}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    thead th{
-      text-align:left;
-      font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-      color: rgba(255,255,255,.58);
-      padding:14px 14px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      background: rgba(0,0,0,.22);
-      position:sticky; top:0; z-index:5;
-      cursor:pointer; user-select:none;
-    }
-    tbody td{
-      padding:12px 14px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      color: rgba(255,255,255,.88);
-      vertical-align:top;
-    }
-    tbody tr:hover{background: rgba(106,168,255,.06)}
-    .muted{color:var(--muted)}
-    .nowrap{white-space:nowrap}
-
-    .badge{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:7px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.16);
+      user-select:none;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      font-size:13px;color:rgba(255,255,255,.88);
       white-space:nowrap;
     }
-    .tag{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:7px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.16);
-      white-space:nowrap;
-      color: rgba(255,255,255,.84);
+    .btn:hover{transform: translateY(-1px); border-color: rgba(201,179,126,.35)}
+    .btn:active{transform: translateY(0px) scale(.99)}
+    .btn.primary{
+      border-color: rgba(201,179,126,.55);
+      background: linear-gradient(180deg, rgba(201,179,126,.22), rgba(255,255,255,.03));
     }
-    .sevDot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(52,211,153,.10)}
-    .sevDot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(251,191,36,.10)}
-    .sevDot.bad{background:var(--bad);box-shadow:0 0 0 4px rgba(251,113,133,.10)}
-
-    /* Detail view */
-    .kv{display:grid;gap:10px;margin-top:10px}
-    .k{
-      border-radius:14px;border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.16);
+    .btn .dot{
+      width:8px;height:8px;border-radius:99px;background:var(--accent);
+      box-shadow: 0 0 16px rgba(201,179,126,.55);
+    }
+    .btn .ic{font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.76)}
+    .hero{
+      padding:34px 4px 18px;
+      display:grid;grid-template-columns: 1.05fr .95fr;gap:18px;align-items:stretch;
+    }
+    @media (max-width: 980px){ .hero{grid-template-columns:1fr; padding-top:18px;} .brand{min-width:auto} }
+    .card{
+      border:1px solid var(--stroke2);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .card::before{
+      content:"";
+      position:absolute;inset:-2px;
+      background: radial-gradient(900px 240px at 20% 0%, rgba(201,179,126,.12), transparent 60%),
+                  radial-gradient(700px 240px at 70% 0%, rgba(121,166,255,.10), transparent 62%);
+      pointer-events:none;
+      opacity:.85;
+    }
+    .card > .inner{position:relative; padding:18px}
+    .hero h2{
+      margin:0;
+      font-size:32px;
+      letter-spacing:-.02em;
+      line-height:1.1;
+    }
+    .hero p{margin:10px 0 0; color:var(--muted); font-size:14px; line-height:1.5}
+    .pillrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .pill{
+      border:1px solid var(--stroke2);
+      background:rgba(255,255,255,.03);
+      padding:8px 10px;border-radius:999px;
+      font-size:12px;color:rgba(255,255,255,.78);
+      display:inline-flex;gap:8px;align-items:center;
+    }
+    .pill b{color:rgba(255,255,255,.92); font-weight:600}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+    @media (max-width: 560px){ .grid2{grid-template-columns:1fr} .hero h2{font-size:28px} }
+    .stat{
+      border:1px solid var(--stroke2);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border-radius: var(--radius);
       padding:12px;
     }
-    .k .t{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.58)}
-    .k .v{margin-top:8px;font-weight:900}
-    .v.dim{color:rgba(255,255,255,.75)}
-    pre{
-      margin:0;
-      white-space:pre-wrap;
-      word-break:break-word;
-      font-family: var(--mono);
-      font-size:12.5px;
-      line-height:1.45;
-      color: rgba(255,255,255,.90);
+    .stat .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2)}
+    .stat .v{margin-top:6px;font-size:20px;font-weight:650}
+    .stat .s{margin-top:4px;font-size:12px;color:var(--muted)}
+    .controls{
+      display:grid;grid-template-columns: 1.4fr .8fr .8fr auto; gap:10px;
+      margin:16px 4px 10px;
+      align-items:center;
     }
-    .divider{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
-
-    .empty{
-      padding:22px 14px;
-      color: var(--muted);
-      text-align:center;
-      line-height:1.5;
+    @media (max-width: 980px){ .controls{grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 520px){ .controls{grid-template-columns: 1fr; } }
+    .field{
+      border:1px solid var(--stroke2);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      padding:10px 12px;
+      display:flex;gap:10px;align-items:center;
     }
-    .error{
-      margin-top:12px;
-      padding:14px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(251,113,133,.07);
-      color: rgba(255,255,255,.90);
+    .field input,.field select{
+      width:100%;
+      background:transparent;
+      border:0; outline:0;
+      color:rgba(255,255,255,.9);
+      font-size:13px;
+      appearance:none;
+    }
+    .field select{cursor:pointer}
+    .field .hint{font-family:var(--mono); font-size:12px; color:var(--muted2)}
+    .split{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      margin: 8px 4px 0;
+      color:var(--muted);
       font-size:12px;
     }
-
-    /* subtle 3D hover */
-    .panel, .pill, .btn2, .search, .card, .tableWrap{
-      transform-style:preserve-3d;
+    .split b{color:rgba(255,255,255,.9)}
+    .list{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
     }
-    .tilt:hover{transform: perspective(900px) rotateX(1.1deg) rotateY(-1.2deg)}
-
-    @media (max-width: 520px){
-      .hero h2{font-size:22px}
-      .search{min-width:100%}
-      .pillrow{justify-content:flex-start}
+    @media (max-width: 980px){ .list{grid-template-columns: repeat(2, 1fr)} }
+    @media (max-width: 560px){ .list{grid-template-columns: 1fr} }
+    .entry{
+      border:1px solid var(--stroke2);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+      border-radius: 20px;
+      padding:14px;
+      position:relative;
+      overflow:hidden;
+      transition: transform .12s ease, border-color .12s ease;
+      cursor:pointer;
+    }
+    .entry:hover{transform: translateY(-2px); border-color: rgba(201,179,126,.30)}
+    .entry .top{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+    }
+    .badge{
+      display:inline-flex;align-items:center;gap:7px;
+      border:1px solid var(--stroke2);
+      background:rgba(255,255,255,.03);
+      padding:6px 9px;border-radius:999px;
+      font-size:11px;color:rgba(255,255,255,.78);
+      white-space:nowrap;
+    }
+    .badge .dot{width:7px;height:7px;border-radius:99px;background:var(--muted2)}
+    .badge.good .dot{background:var(--good)}
+    .badge.warn .dot{background:var(--warn)}
+    .badge.bad  .dot{background:var(--bad)}
+    .badge.neutral .dot{background:var(--accent2)}
+    .eid{
+      font-family:var(--mono);
+      font-size:12px;
+      color:rgba(255,255,255,.76);
+    }
+    .title{
+      margin-top:10px;
+      font-size:15px;
+      font-weight:650;
+      letter-spacing:-.01em;
+      line-height:1.25;
+    }
+    .meta{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+      display:flex;flex-wrap:wrap;gap:8px;
+    }
+    .chip{
+      border:1px solid var(--stroke2);
+      background:rgba(255,255,255,.02);
+      padding:5px 8px;border-radius:999px;
+      font-size:11px;color:rgba(255,255,255,.70);
+    }
+    .foot{
+      margin-top:10px;
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      color:var(--muted2);font-size:11px;
+    }
+    .foot .link{
+      text-decoration:none;
+      border-bottom:1px dashed rgba(201,179,126,.35);
+      color:rgba(255,255,255,.78);
+    }
+    .empty{
+      margin:18px 4px;
+      padding:16px;
+      border:1px solid var(--stroke2);
+      border-radius: 18px;
+      background: rgba(255,255,255,.02);
+      color: var(--muted);
+      font-size:13px;
+      line-height:1.5;
+    }
+    .footer{
+      margin-top:26px;
+      padding:16px 4px 0;
+      border-top:1px solid var(--stroke2);
+      color: var(--muted2);
+      font-size:12px;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .footer .mono{font-family:var(--mono); color:rgba(255,255,255,.70)}
+    .toast{
+      position:fixed;left:50%;transform:translateX(-50%);
+      bottom:16px;z-index:90;
+      background: rgba(10,14,26,.72);
+      border:1px solid var(--stroke2);
+      padding:10px 12px;border-radius:14px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      color: rgba(255,255,255,.86);
+      font-size:12px;
+      display:none;
+      max-width: calc(100vw - 24px);
+    }
+    /* Modal */
+    .modalWrap{
+      position:fixed;inset:0;z-index:80;
+      background: rgba(0,0,0,.58);
+      backdrop-filter: blur(8px);
+      display:none;
+      padding:18px;
+    }
+    .modal{
+      max-width: 980px;
+      margin: 0 auto;
+      border:1px solid var(--stroke2);
+      background: linear-gradient(180deg, rgba(12,16,30,.94), rgba(7,10,18,.92));
+      border-radius: 24px;
+      box-shadow: 0 30px 110px rgba(0,0,0,.70);
+      overflow:hidden;
+    }
+    .modalHeader{
+      display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--stroke2);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    }
+    .modalHeader .h{
+      display:flex;flex-direction:column;gap:6px;
+      min-width:0;
+    }
+    .modalHeader .h .t{
+      font-size:14px;font-weight:700; letter-spacing:-.01em;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .modalHeader .h .m{
+      display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--muted);
+      font-size:12px;
+    }
+    .x{
+      border:1px solid var(--stroke2);
+      background: rgba(255,255,255,.03);
+      color:rgba(255,255,255,.85);
+      padding:10px 12px;border-radius:14px;
+      cursor:pointer;
+    }
+    .modalBody{
+      padding:16px;
+      max-height: calc(100vh - 160px);
+      overflow:auto;
+    }
+    .md{
+      line-height:1.55;
+      color:rgba(255,255,255,.86);
+      font-size:14px;
+    }
+    .md h1,.md h2,.md h3{line-height:1.2}
+    .md h1{font-size:22px;margin:14px 0 10px}
+    .md h2{font-size:18px;margin:18px 0 10px}
+    .md h3{font-size:16px;margin:16px 0 8px}
+    .md p{margin:10px 0;color:rgba(255,255,255,.82)}
+    .md ul{margin:10px 0 10px 18px}
+    .md li{margin:6px 0;color:rgba(255,255,255,.82)}
+    .md code{
+      font-family:var(--mono);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      padding:2px 6px;border-radius:10px;
+      font-size: 12px;
+    }
+    .md pre{
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      padding:12px;border-radius: 16px;
+      overflow:auto;
+    }
+    .md pre code{background:transparent;border:0;padding:0}
+    .md a{
+      color: rgba(201,179,126,.95);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(201,179,126,.35);
+    }
+    .md blockquote{
+      margin: 12px 0;
+      padding: 10px 12px;
+      border-left: 3px solid rgba(201,179,126,.55);
+      background: rgba(255,255,255,.03);
+      border-radius: 14px;
+      color: rgba(255,255,255,.78);
+    }
+    .rowBtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .small{
+      font-size:12px;color:var(--muted);
+      margin-top:8px;
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-      <div class="brand">
-        <div class="sig" aria-hidden="true"></div>
-        <div style="min-width:0">
-          <h1>APEX ATA LEDGER</h1>
-          <div class="sub">Immutable Verdict Registry • Citation Surface • Audit Trail</div>
-        </div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="sigil" title="APEX">
+        <!-- Optional: add apex-sigil.png to your repo root -->
+        <img src="apex-sigil.png" alt="" onerror="this.style.display='none'">
       </div>
-
-      <div class="pillrow">
-        <div class="pill tilt"><span class="dot ok" id="liveDot"></span><span id="liveText">LIVE</span></div>
-        <div class="pill tilt"><span class="mono" id="lastUpdated">Last updated: —</span></div>
-        <a class="pill tilt" href="https://kawal393.github.io/" rel="noopener">
-          <span class="muted">APEX</span>&nbsp;<span class="gold">PORTAL</span>
-        </a>
+      <div>
+        <h1>APEX-ATA Ledger</h1>
+        <div class="sub">Public registry • immutable by commit history • citeable IDs</div>
       </div>
     </div>
 
-    <!-- HERO -->
-    <section class="panel hero tilt">
-      <div class="heroTop">
-        <h2><span>Authority</span> Ledger</h2>
-        <div class="chip">Mode: <span class="mono" style="color:rgba(255,255,255,.88)">Public Surface (Delayed)</span></div>
-      </div>
-      <p>
-        This registry is append-only. Each entry is a timestamped record of an APEX verdict.
-        Institutions cite entries. Operators track drift. The record is the weapon — not persuasion.
-      </p>
+    <div class="actions">
+      <a class="btn" id="btnRepo" href="#" target="_blank" rel="noreferrer">
+        <span class="ic">↗</span> Repo
+      </a>
+      <a class="btn" id="btnRegistry" href="#registry">
+        <span class="ic">⌁</span> Registry
+      </a>
+      <a class="btn" id="btnVerifier" href="#verify">
+        <span class="ic">✓</span> Verifier
+      </a>
+      <button class="btn primary" id="btnCopyCite" type="button" title="Copy a citation template">
+        <span class="dot"></span> Copy citation
+      </button>
+    </div>
+  </div>
 
-      <div class="row">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <button class="btn" id="loadBtn">Load Ledger</button>
-          <button class="btn2" id="refreshBtn">Force Refresh</button>
-          <button class="btn2" id="copyCiteBtn">Copy Citation</button>
+  <div class="wrap">
+    <section class="hero">
+      <div class="card">
+        <div class="inner">
+          <h2>Authority you can cite.<br/>Evidence you can anchor.</h2>
+          <p>
+            This site is the public face of the <b>APEX-ATA Ledger</b>: an append-only registry of records, verdicts, and attestations.
+            Each entry has a stable ID and a source path. Commit history is the canonical timestamp.
+          </p>
+
+          <div class="pillrow">
+            <div class="pill"><span style="color:var(--accent)">◆</span> Mode: <b>Registry</b></div>
+            <div class="pill"><span style="color:var(--accent2)">◈</span> Format: <b>Machine-readable</b></div>
+            <div class="pill"><span style="color:var(--good)">●</span> Integrity: <b>Append-only discipline</b></div>
+          </div>
+
+          <div class="rowBtns">
+            <a class="btn primary" href="#registry"><span class="ic">↓</span> Enter Registry</a>
+            <a class="btn" href="#about"><span class="ic">i</span> Purpose</a>
+            <a class="btn" href="#verify"><span class="ic">✓</span> Verify</a>
+          </div>
+
+          <div class="small">
+            Tip: add <code>/registry/index.json</code> to make this fully live. If missing, the site shows a safe demo view.
+          </div>
         </div>
-        <div class="chip">Entries: <span class="mono" id="count" style="color:rgba(255,255,255,.88)">0</span></div>
+      </div>
+
+      <div class="card">
+        <div class="inner">
+          <div class="grid2">
+            <div class="stat">
+              <div class="k">Registry status</div>
+              <div class="v" id="statStatus">Loading…</div>
+              <div class="s" id="statStatusSub">Checking /registry/index.json</div>
+            </div>
+            <div class="stat">
+              <div class="k">Entries</div>
+              <div class="v" id="statCount">—</div>
+              <div class="s" id="statUpdated">Updated: —</div>
+            </div>
+          </div>
+
+          <div class="stat" style="margin-top:12px">
+            <div class="k">Citation pattern</div>
+            <div class="v" style="font-family:var(--mono); font-size:14px; font-weight:600">
+              APEX-ATA • <span id="citePattern">ATA-YYYY-NNNN</span>
+            </div>
+            <div class="s">
+              Use the ID + path + commit link for clean verification.
+            </div>
+          </div>
+
+          <div class="stat" style="margin-top:12px">
+            <div class="k">Public posture</div>
+            <div class="s" style="margin-top:8px; line-height:1.5">
+              Registry records only. No private data. No speculative claims. Sources are listed per entry.
+              This is designed to be referenced, audited, and linked.
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <div class="grid">
+    <a id="registry"></a>
+    <div class="controls">
+      <div class="field" title="Search across ID, entity, classification, tags">
+        <span class="hint">SEARCH</span>
+        <input id="q" placeholder="Search: Meta, NVIDIA, ATA-2026-0005, AI, compute…" autocomplete="off" />
+      </div>
 
-      <!-- LEDGER TABLE -->
-      <section class="card tilt">
-        <div class="controls">
-          <div class="controlLeft">
-            <div class="search" role="search">
-              <span class="muted">⌕</span>
-              <input id="q" placeholder="Search ATA ID, sector, title, entity, keywords…" autocomplete="off"/>
-            </div>
+      <div class="field" title="Filter by status">
+        <span class="hint">STATUS</span>
+        <select id="status">
+          <option value="">All</option>
+          <option value="Unverified">Unverified</option>
+          <option value="Verified">Verified</option>
+          <option value="Draft">Draft</option>
+          <option value="Archived">Archived</option>
+        </select>
+      </div>
 
-            <select id="sectorFilter" title="Filter by sector">
-              <option value="all">All Sectors</option>
-            </select>
+      <div class="field" title="Sort order">
+        <span class="hint">SORT</span>
+        <select id="sort">
+          <option value="new">Newest first</option>
+          <option value="old">Oldest first</option>
+          <option value="az">Entity A→Z</option>
+          <option value="za">Entity Z→A</option>
+        </select>
+      </div>
 
-            <select id="sevFilter" title="Filter by severity">
-              <option value="all">All Severity</option>
-              <option value="bad">High</option>
-              <option value="warn">Medium</option>
-              <option value="ok">Low</option>
-            </select>
-          </div>
-
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-            <a class="btn2" id="dataLink" href="./docs/ata.json">View raw ata.json</a>
-            <button class="btn2" id="downloadBtn">Download JSON</button>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th data-key="id">ATA ID</th>
-                <th data-key="sector">Sector</th>
-                <th data-key="title">Title</th>
-                <th data-key="entity">Entity</th>
-                <th data-key="severity">Severity</th>
-                <th data-key="ts" class="nowrap">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
-          <div class="empty" id="empty" style="display:none">No entries match your filters.</div>
-        </div>
-
-        <div class="error" id="err" style="display:none"></div>
-
-        <div class="divider"></div>
-
-        <div class="muted" style="font-size:12px">
-          Tip: click a row to open the full entry. Click headers to sort.
-        </div>
-      </section>
-
-      <!-- DETAIL PANEL -->
-      <section class="card tilt" id="detailCard">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <div>
-            <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.58)">
-              Entry View
-            </div>
-            <div style="margin-top:6px;font-size:18px;font-weight:900;letter-spacing:.02em" id="d_title">
-              Select an entry
-            </div>
-          </div>
-          <span class="tag" id="d_badge"><span class="sevDot"></span><span class="mono">—</span></span>
-        </div>
-
-        <div class="kv">
-          <div class="k">
-            <div class="t">ATA ID</div>
-            <div class="v mono" id="d_id">—</div>
-          </div>
-          <div class="k">
-            <div class="t">Sector</div>
-            <div class="v dim" id="d_sector">—</div>
-          </div>
-          <div class="k">
-            <div class="t">Entity</div>
-            <div class="v dim" id="d_entity">—</div>
-          </div>
-          <div class="k">
-            <div class="t">Timestamp</div>
-            <div class="v dim mono" id="d_ts">—</div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.58)">
-            APEX Verdict (recorded)
-          </div>
-          <button class="btn2" id="copyEntryBtn">Copy Entry</button>
-        </div>
-
-        <div style="margin-top:10px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.16);padding:12px">
-          <pre id="d_body">Select an entry to reveal the record.</pre>
-        </div>
-
-        <div class="divider"></div>
-
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn2" id="openHashBtn">Share Link</button>
-          <button class="btn2" id="clearSelBtn">Clear</button>
-        </div>
-
-        <div class="muted" style="font-size:12px;margin-top:12px;line-height:1.5">
-          Surface Nodes:
-          <a href="https://kawal393.github.io/apex-corporate-translator/">APEX Corporate Translator</a> •
-          <a href="https://kawal393.github.io/ndis-signal-board/">APEX NDIS Watchtower</a> •
-          <a href="https://kawal393.github.io/-APEX-GHOST-PROTOCOL/">APEX Ghost Protocol</a>
-        </div>
-      </section>
-
+      <button class="btn" id="btnReset" type="button" title="Reset filters">
+        <span class="ic">⟲</span> Reset
+      </button>
     </div>
 
-    <div class="muted" style="font-size:12px;line-height:1.6;margin-top:14px;padding:0 4px">
-      This is a public surface. Institutional access removes delay and enables API queries.
-      <br/>© 2026 APEX • <span class="gold">The record becomes gravity.</span>
+    <div class="split">
+      <div>Showing <b id="shown">0</b> of <b id="total">0</b></div>
+      <div class="mono" id="sourceLine">Source: —</div>
     </div>
 
+    <div id="empty" class="empty" style="display:none"></div>
+    <div id="list" class="list" aria-live="polite"></div>
+
+    <a id="verify"></a>
+    <div class="card" style="margin-top:18px">
+      <div class="inner">
+        <h2 style="margin:0; font-size:18px">Verifier (simple mode)</h2>
+        <p style="margin:8px 0 0; color:var(--muted); font-size:13px; line-height:1.55">
+          Paste an entry ID to jump. For cryptographic verification and integrity checking, link your existing verifier path.
+          (If you already have a verifier folder, wire it here.)
+        </p>
+
+        <div class="controls" style="margin:14px 0 0; grid-template-columns: 1.6fr auto auto;">
+          <div class="field">
+            <span class="hint">ID</span>
+            <input id="jumpId" placeholder="e.g. ATA-2026-0005" />
+          </div>
+          <button class="btn primary" id="btnJump" type="button"><span class="dot"></span> Jump</button>
+          <button class="btn" id="btnOpenVerifier" type="button"><span class="ic">↗</span> Open Verifier</button>
+        </div>
+
+        <div class="small" id="verifierHint">
+          If your repo contains <code>/verifier/</code> with an <code>index.html</code>, this button will open it.
+        </div>
+      </div>
+    </div>
+
+    <a id="about"></a>
+    <div class="footer">
+      <div>
+        <div style="font-weight:650;color:rgba(255,255,255,.85)">APEX-ATA Ledger</div>
+        <div style="margin-top:6px">Append-only registry interface • Designed for citation, audit, and public linking.</div>
+      </div>
+      <div class="mono" id="footMono">—</div>
+    </div>
   </div>
 
-<script>
-(() => {
-  const DATA_URL = "./docs/ata.json"; // optional: create /docs/ata.json later
-  const $ = (id) => document.getElementById(id);
+  <div class="toast" id="toast"></div>
 
-  const state = {
-    raw: [],
-    rows: [],
-    sortKey: "ts",
-    sortDir: "desc",
-    selectedId: null
-  };
+  <div class="modalWrap" id="modalWrap" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <div class="h">
+          <div class="t" id="modalTitle">Entry</div>
+          <div class="m" id="modalMeta"></div>
+        </div>
+        <button class="x" id="btnClose" type="button">Close</button>
+      </div>
+      <div class="modalBody">
+        <div class="rowBtns" style="margin-bottom:12px">
+          <a class="btn" id="btnOpenMd" href="#" target="_blank" rel="noreferrer"><span class="ic">↗</span> Open source</a>
+          <button class="btn primary" id="btnCopyEntryCite" type="button"><span class="dot"></span> Copy citation</button>
+          <button class="btn" id="btnCopyLink" type="button"><span class="ic">⧉</span> Copy link</button>
+        </div>
+        <div class="md" id="md"></div>
+      </div>
+    </div>
+  </div>
 
-  const sample = [
-    {
-      id: "ATA-2026-0001",
-      ts: "2026-02-06 07:10",
-      sector: "NDIS",
-      title: "Enforcement signal spike — provider cluster",
-      entity: "NDIS Provider Group (AU)",
-      severity: "warn",
-      body: "• Tier: Hold\n• Confidence: Medium\n• Why: Enforcement pattern is clustering | New conditions language appearing | Time-to-notice is compressing\n• Next Cheapest Test: Request their internal audit schedule + last compliance remediation date.\n• Kill Rule: If they refuse specifics twice, assume optics > reality and drop."
-    },
-    {
-      id: "ATA-2026-0002",
-      ts: "2026-02-06 07:18",
-      sector: "AI / Compliance",
-      title: "EU AI Act deadline proximity — governance exposure",
-      entity: "Large operator class",
-      severity: "bad",
-      body: "• Tier: Advance\n• Confidence: High\n• Why: Deadline-driven governance scramble | Vendor claims outpacing controls | Audit trails absent by default\n• Next Cheapest Test: Ask for model inventory + DPIA / impact assessment artifacts.\n• Kill Rule: If they cannot produce inventory within 14 days, they are non-compliant in practice."
-    },
-    {
-      id: "ATA-2026-0003",
-      ts: "2026-02-06 07:25",
-      sector: "Infrastructure",
-      title: "Grid constraint drift — site viability compression",
-      entity: "Large load projects",
-      severity: "warn",
-      body: "• Tier: Hold\n• Confidence: Medium\n• Why: Constraint maps shifting | Queue priority hidden behind paperwork | Transmission timeline slip risk\n• Next Cheapest Test: Identify exact connection point + MW requirement + committed timeline in writing.\n• Kill Rule: If timeline shifts twice without reasons, reprice feasibility as 'No-Go'."
-    }
-  ];
-
-  function norm(v){ return (v===null||v===undefined) ? "" : String(v).trim(); }
-
-  function sanitize(text){
-    return norm(text)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  function toDate(v){
-    if(!v) return null;
-    const d = new Date(v);
-    if(!isNaN(d)) return d;
-    const s = String(v).trim().replace(" ", "T");
-    const d2 = new Date(s);
-    return isNaN(d2) ? null : d2;
-  }
-
-  function fmtDate(d){
-    if(!d) return "—";
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-    const hh = String(d.getHours()).padStart(2,"0");
-    const mm = String(d.getMinutes()).padStart(2,"0");
-    return `${y}-${m}-${day} ${hh}:${mm}`;
-  }
-
-  function sevDotClass(s){
-    if(s === "bad") return "sevDot bad";
-    if(s === "warn") return "sevDot warn";
-    return "sevDot";
-  }
-  function sevLabel(s){
-    if(s === "bad") return "High";
-    if(s === "warn") return "Medium";
-    return "Low";
-  }
-
-  function buildRow(o){
-    const id = norm(o.id || o.ata_id || "");
-    const sector = norm(o.sector || o.domain || "—");
-    const title = norm(o.title || o.headline || "—");
-    const entity = norm(o.entity || o.subject || "—");
-    const severity = norm(o.severity || o.risk || "ok").toLowerCase();
-    const tsRaw = norm(o.ts || o.timestamp || o.date || "");
-    const ts = toDate(tsRaw);
-    const body = norm(o.body || o.verdict || o.text || "");
-    const searchable = `${id} ${sector} ${title} ${entity} ${tsRaw} ${body}`.toLowerCase();
-
-    return { id, sector, title, entity, severity: (severity==="bad"||severity==="warn"||severity==="ok") ? severity : "ok", ts, tsText: fmtDate(ts), body, _search: searchable };
-  }
-
-  function fillSector(rows){
-    const sel = $("sectorFilter");
-    const set = new Set();
-    rows.forEach(r => set.add(r.sector));
-    const sectors = Array.from(set).filter(Boolean).sort((a,b)=>a.localeCompare(b));
-    sel.innerHTML = `<option value="all">All Sectors</option>` + sectors.map(s => `<option value="${sanitize(s)}">${sanitize(s)}</option>`).join("");
-  }
-
-  function rankSev(s){ return s==="bad" ? 3 : (s==="warn" ? 2 : 1); }
-
-  function sortRows(rows){
-    const {sortKey, sortDir} = state;
-    const dir = sortDir === "asc" ? 1 : -1;
-
-    const val = (r) => {
-      if(sortKey === "id") return r.id;
-      if(sortKey === "sector") return r.sector;
-      if(sortKey === "title") return r.title;
-      if(sortKey === "entity") return r.entity;
-      if(sortKey === "severity") return r.severity;
-      if(sortKey === "ts") return r.ts ? r.ts.getTime() : 0;
-      return "";
-    };
-
-    return rows.slice().sort((a,b) => {
-      const A = val(a), B = val(b);
-      if(sortKey === "severity") return (rankSev(A) - rankSev(B)) * dir;
-      if(typeof A === "number" && typeof B === "number") return (A - B) * dir;
-      return String(A).localeCompare(String(B)) * dir;
-    });
-  }
-
-  function applyFilters(){
-    const q = norm($("q").value).toLowerCase();
-    const s = $("sectorFilter").value;
-    const sev = $("sevFilter").value;
-
-    let rows = state.rows;
-    if(q) rows = rows.filter(r => r._search.includes(q));
-    if(s !== "all") rows = rows.filter(r => r.sector === s);
-    if(sev !== "all") rows = rows.filter(r => r.severity === sev);
-
-    rows = sortRows(rows);
-    render(rows);
-    $("count").textContent = rows.length;
-    updateLiveDot(rows);
-  }
-
-  function render(rows){
-    const tb = $("tbody");
-    const empty = $("empty");
-
-    if(!rows.length){
-      tb.innerHTML = "";
-      empty.style.display = "block";
-      return;
-    }
-    empty.style.display = "none";
-
-    tb.innerHTML = rows.map(r => `
-      <tr data-id="${sanitize(r.id)}" style="cursor:pointer">
-        <td class="mono nowrap">${sanitize(r.id)}</td>
-        <td>${sanitize(r.sector)}</td>
-        <td>${sanitize(r.title)}</td>
-        <td class="muted">${sanitize(r.entity)}</td>
-        <td>
-          <span class="badge">
-            <span class="${sevDotClass(r.severity)}"></span>
-            <span>${sanitize(sevLabel(r.severity))}</span>
-          </span>
-        </td>
-        <td class="mono nowrap">${sanitize(r.tsText)}</td>
-      </tr>
-    `).join("");
-
-    // row click
-    tb.querySelectorAll("tr[data-id]").forEach(tr => {
-      tr.addEventListener("click", () => openEntry(tr.getAttribute("data-id")));
-    });
-  }
-
-  function updateLiveDot(rows){
-    const dot = $("liveDot");
-    const txt = $("liveText");
-
-    const hi = rows.filter(r => r.severity === "bad").length;
-    const med = rows.filter(r => r.severity === "warn").length;
-
-    if(hi > 0){
-      dot.className = "dot bad";
-      txt.textContent = "HIGH SIGNALS";
-    }else if(med > 0){
-      dot.className = "dot warn";
-      txt.textContent = "ACTIVE";
-    }else{
-      dot.className = "dot ok";
-      txt.textContent = "CALM";
-    }
-  }
-
-  function setSort(key){
-    if(state.sortKey === key){
-      state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-    }else{
-      state.sortKey = key;
-      state.sortDir = (key === "title" || key === "sector" || key === "entity" || key === "id") ? "asc" : "desc";
-    }
-    applyFilters();
-  }
-
-  function wireSort(){
-    document.querySelectorAll("thead th[data-key]").forEach(th => {
-      th.addEventListener("click", () => setSort(th.dataset.key));
-    });
-  }
-
-  function copyText(text){
-    navigator.clipboard?.writeText(text).catch(() => {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-    });
-  }
-
-  function openEntry(id){
-    const r = state.rows.find(x => x.id === id);
-    if(!r) return;
-
-    state.selectedId = id;
-
-    $("d_title").textContent = r.title || "—";
-    $("d_id").textContent = r.id || "—";
-    $("d_sector").textContent = r.sector || "—";
-    $("d_entity").textContent = r.entity || "—";
-    $("d_ts").textContent = r.tsText || "—";
-    $("d_body").textContent = r.body || "—";
-
-    $("d_badge").innerHTML = `<span class="${sevDotClass(r.severity)}"></span><span class="mono">${sevLabel(r.severity)} SEVERITY</span>`;
-
-    // set hash for sharing
-    history.replaceState(null, "", `#${encodeURIComponent(r.id)}`);
-  }
-
-  function clearSel(){
-    state.selectedId = null;
-    $("d_title").textContent = "Select an entry";
-    $("d_id").textContent = "—";
-    $("d_sector").textContent = "—";
-    $("d_entity").textContent = "—";
-    $("d_ts").textContent = "—";
-    $("d_body").textContent = "Select an entry to reveal the record.";
-    $("d_badge").innerHTML = `<span class="sevDot"></span><span class="mono">—</span>`;
-    history.replaceState(null, "", location.pathname + location.search);
-  }
-
-  function citationFor(id){
-    return `APEX ATA Ledger — ${id}`;
-  }
-
-  function setLastUpdatedFromRows(){
-    const newest = state.rows
-      .map(r => r.ts ? r.ts.getTime() : 0)
-      .reduce((a,b)=>Math.max(a,b), 0);
-
-    const d = newest ? new Date(newest) : new Date();
-    $("lastUpdated").textContent = `Last updated: ${fmtDate(d)}`;
-  }
-
-  function showError(msg){
-    const box = $("err");
-    box.style.display = "block";
-    box.innerHTML = `<b>Load error:</b> ${sanitize(msg)}<div style="margin-top:6px;color:rgba(255,255,255,.65)">If you haven't created <span class="mono">docs/ata.json</span> yet, click “Load Ledger” to use the built-in sample data.</div>`;
-  }
-
-  async function fetchJson(url){
-    const res = await fetch(url, {cache:"no-store"});
-    if(!res.ok) throw new Error(`Failed to fetch ata.json (${res.status})`);
-    return await res.json();
-  }
-
-  async function load(useRemote){
-    $("err").style.display = "none";
-
-    let data;
-    if(useRemote){
-      const url = `${DATA_URL}?v=${Date.now()}`;
-      data = await fetchJson(url);
-    }else{
-      data = sample;
-    }
-
-    const raw = Array.isArray(data) ? data : (Array.isArray(data.entries) ? data.entries : []);
-    state.raw = raw;
-    state.rows = raw.map(buildRow);
-
-    fillSector(state.rows);
-    setLastUpdatedFromRows();
-    applyFilters();
-
-    // auto-open hash
-    try{
-      const hash = decodeURIComponent((location.hash || "").replace("#","")).trim();
-      if(hash){
-        openEntry(hash);
+  <script>
+    // ====== CONFIG (safe defaults) ======
+    const REGISTRY_URL = "registry/index.json"; // create this file to go fully live
+    const DEFAULT_STATUS = "Unverified";
+    const FALLBACK_ENTRIES = [
+      {
+        id: "ATA-2026-0005",
+        entity: "Meta Platforms, Inc.",
+        classification: "Public Company",
+        jurisdiction: "United States (Primary), Global Operations",
+        status: "Unverified",
+        tags: ["AI", "Compute", "Infrastructure"],
+        path: "registry/ATA-2026-0005-META.md",
+        updated: "2026-02-06"
+      },
+      {
+        id: "ATA-2026-0014",
+        entity: "NVIDIA Corporation",
+        classification: "Public Company",
+        jurisdiction: "United States (Primary), Global Operations",
+        status: "Unverified",
+        tags: ["AI", "Semiconductors", "Data Center"],
+        path: "registry/ATA-2026-0014-NVIDIA.md",
+        updated: "2026-02-06"
+      },
+      {
+        id: "ATA-2026-0001",
+        entity: "BHP Group",
+        classification: "Public Company",
+        jurisdiction: "Australia (Primary), Global Operations",
+        status: "Unverified",
+        tags: ["Resources", "Infrastructure"],
+        path: "registry/ATA-2026-0001-BHP.md",
+        updated: "2026-02-06"
       }
-    }catch(e){}
-  }
+    ];
 
-  function wire(){
-    $("q").addEventListener("input", applyFilters);
-    $("sectorFilter").addEventListener("change", applyFilters);
-    $("sevFilter").addEventListener("change", applyFilters);
+    // ====== Helpers ======
+    const $ = (id) => document.getElementById(id);
 
-    $("loadBtn").addEventListener("click", async () => {
-      $("loadBtn").textContent = "Loading…";
+    function toast(msg){
+      const t = $("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=> t.style.display = "none", 2400);
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;")
+        .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+
+    // minimal markdown renderer (safe / simple)
+    function renderMarkdown(md){
+      if(!md) return "<p style='color:rgba(255,255,255,.70)'>No preview available.</p>";
+      let text = md.replace(/\r\n/g,"\n");
+
+      // code blocks
+      const codeBlocks = [];
+      text = text.replace(/```([\s\S]*?)```/g, (m, code)=>{
+        codeBlocks.push(code);
+        return `@@CODEBLOCK_${codeBlocks.length-1}@@`;
+      });
+
+      // inline code
+      text = text.replace(/`([^`]+)`/g, (m,c)=> `<code>${escapeHtml(c)}</code>`);
+
+      // headings
+      text = text.replace(/^### (.*)$/gm, "<h3>$1</h3>");
+      text = text.replace(/^## (.*)$/gm, "<h2>$1</h2>");
+      text = text.replace(/^# (.*)$/gm, "<h1>$1</h1>");
+
+      // blockquote
+      text = text.replace(/^> (.*)$/gm, "<blockquote>$1</blockquote>");
+
+      // links [text](url)
+      text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (m, t, u)=>{
+        return `<a href="${escapeHtml(u)}" target="_blank" rel="noreferrer">${escapeHtml(t)}</a>`;
+      });
+
+      // unordered lists
+      // wrap consecutive -/* lines into <ul>
+      text = text.replace(/(^|\n)([-*]) (.*)(?=\n|$)/g, (m, start, bullet, item)=>{
+        return `${start}<li>${escapeHtml(item)}</li>`;
+      });
+      text = text.replace(/(<li>[\s\S]*?<\/li>)/g, (block)=>{
+        // group list items that are adjacent
+        return block;
+      });
+      // Post-process: convert runs of <li> into <ul>
+      text = text.replace(/(?:\n|^)(<li>[\s\S]*?<\/li>)(?=\n(?!<li>)|$)/g, (m, run)=>{
+        // This matches only one <li> at a time; we need a better grouping approach:
+        return "\n@@LI_RUN_START@@"+run+"@@LI_RUN_END@@";
+      });
+      // Group tagged runs: collapse consecutive markers
+      while(text.includes("@@LI_RUN_END@@\n@@LI_RUN_START@@")){
+        text = text.replace("@@LI_RUN_END@@\n@@LI_RUN_START@@", "\n");
+      }
+      text = text.replace(/@@LI_RUN_START@@([\s\S]*?)@@LI_RUN_END@@/g, (m, items)=>{
+        // items is one or more <li> lines
+        return `\n<ul>${items}</ul>\n`;
+      });
+
+      // paragraphs: split by blank lines
+      const parts = text.split(/\n{2,}/).map(p=>p.trim()).filter(Boolean);
+      let html = parts.map(p=>{
+        // if already block element
+        if(/^<(h1|h2|h3|ul|pre|blockquote)/.test(p)) return p;
+        // convert single newlines to <br>
+        const safe = p.replace(/\n/g,"<br/>");
+        // escape any stray angle brackets (already escaped inline code/link text)
+        // but preserve our tags by a simple allowlist:
+        // We'll assume remaining p is plain text with <br/> only.
+        return `<p>${escapeHtml(safe).replaceAll("&lt;br/&gt;","<br/>")}</p>`;
+      }).join("\n");
+
+      // restore code blocks
+      html = html.replace(/@@CODEBLOCK_(\d+)@@/g, (m, idx)=>{
+        const code = codeBlocks[Number(idx)] ?? "";
+        return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+      });
+
+      // Fix any double-escaped <ul>/<li> created in paragraph stage (we avoided by block detection, but just in case)
+      html = html
+        .replaceAll("&lt;ul&gt;","<ul>").replaceAll("&lt;/ul&gt;","</ul>")
+        .replaceAll("&lt;li&gt;","<li>").replaceAll("&lt;/li&gt;","</li>")
+        .replaceAll("&lt;blockquote&gt;","<blockquote>").replaceAll("&lt;/blockquote&gt;","</blockquote>")
+        .replaceAll("&lt;h1&gt;","<h1>").replaceAll("&lt;/h1&gt;","</h1>")
+        .replaceAll("&lt;h2&gt;","<h2>").replaceAll("&lt;/h2&gt;","</h2>")
+        .replaceAll("&lt;h3&gt;","<h3>").replaceAll("&lt;/h3&gt;","</h3>");
+
+      return html;
+    }
+
+    function statusBadge(status){
+      const s = (status || DEFAULT_STATUS).trim();
+      if(s.toLowerCase() === "verified") return ["good","Verified"];
+      if(s.toLowerCase() === "draft") return ["warn","Draft"];
+      if(s.toLowerCase() === "archived") return ["bad","Archived"];
+      return ["neutral", s || DEFAULT_STATUS];
+    }
+
+    function byIdNumeric(a,b){
+      // expects ATA-YYYY-NNNN; fallback lexical
+      const re = /(\d{4})-(\d+)/;
+      const ma = String(a.id||"").match(re);
+      const mb = String(b.id||"").match(re);
+      if(ma && mb){
+        const ya = Number(ma[1]), yb = Number(mb[1]);
+        const na = Number(ma[2]), nb = Number(mb[2]);
+        if(ya !== yb) return ya - yb;
+        return na - nb;
+      }
+      return String(a.id||"").localeCompare(String(b.id||""));
+    }
+
+    function repoUrlGuess(){
+      // Best effort: turn current Pages URL into repo URL (works for many GitHub Pages patterns)
+      // If not detectable, fall back to current origin.
+      const host = location.host;
+      const parts = location.pathname.split("/").filter(Boolean);
+      // user.github.io/repo/
+      if(host.endsWith("github.io") && parts.length >= 1){
+        const user = host.replace(".github.io","");
+        const repo = parts[0];
+        return `https://github.com/${user}/${repo}`;
+      }
+      return "https://github.com/";
+    }
+
+    function buildEntryCard(e){
+      const [klass,label] = statusBadge(e.status);
+      const tags = Array.isArray(e.tags) ? e.tags : [];
+      const chips = tags.slice(0,3).map(t=>`<span class="chip">${escapeHtml(t)}</span>`).join("");
+      const jurisdiction = e.jurisdiction ? `<span class="chip">${escapeHtml(e.jurisdiction)}</span>` : "";
+      const cls = e.classification ? `<span class="chip">${escapeHtml(e.classification)}</span>` : "";
+      const updated = e.updated ? escapeHtml(e.updated) : "—";
+      return `
+        <div class="entry" data-id="${escapeHtml(e.id)}">
+          <div class="top">
+            <div class="eid">${escapeHtml(e.id)}</div>
+            <div class="badge ${klass}"><span class="dot"></span>${escapeHtml(label)}</div>
+          </div>
+          <div class="title">${escapeHtml(e.entity || "Untitled Entity")}</div>
+          <div class="meta">
+            ${cls}
+            ${jurisdiction}
+            ${chips}
+          </div>
+          <div class="foot">
+            <div>Updated: ${updated}</div>
+            <a class="link" href="${escapeHtml(e.path || "#")}" target="_blank" rel="noreferrer">Source</a>
+          </div>
+        </div>
+      `;
+    }
+
+    // ====== State ======
+    let registry = { updated: null, entries: [] };
+    let view = [];
+
+    // ====== Load registry ======
+    async function loadRegistry(){
+      const repo = repoUrlGuess();
+      $("btnRepo").href = repo;
+
+      // Try to discover verifier route
+      $("btnOpenVerifier").onclick = () => {
+        // If there is a verifier site, open it. Otherwise open repo /verifier folder.
+        const candidate = location.origin + location.pathname.replace(/\/+$/,"") + "/verifier/";
+        window.open(candidate, "_blank", "noreferrer");
+      };
+
       try{
-        // Try remote first, fall back to sample
-        try{
-          await load(true);
-        }catch(e){
-          await load(false);
+        const res = await fetch(REGISTRY_URL, { cache: "no-store" });
+        if(!res.ok) throw new Error("Registry JSON missing");
+        const data = await res.json();
+        registry.updated = data.updated || null;
+        registry.entries = Array.isArray(data.entries) ? data.entries : [];
+        $("statStatus").textContent = "Live";
+        $("statStatusSub").textContent = "Loaded /registry/index.json";
+        $("sourceLine").textContent = "Source: /registry/index.json";
+      }catch(err){
+        // Fallback demo
+        registry.updated = new Date().toISOString().slice(0,10);
+        registry.entries = FALLBACK_ENTRIES;
+        $("statStatus").textContent = "Demo";
+        $("statStatusSub").textContent = "Add /registry/index.json to go live";
+        $("sourceLine").textContent = "Source: fallback demo (missing registry/index.json)";
+      }
+
+      $("statCount").textContent = String(registry.entries.length);
+      $("statUpdated").textContent = "Updated: " + (registry.updated || "—");
+      $("total").textContent = String(registry.entries.length);
+      $("footMono").textContent = `Build: ${location.host}${location.pathname} • ${registry.updated ? "Registry "+registry.updated : "Registry"}`;
+
+      apply();
+    }
+
+    // ====== Filter/sort/search ======
+    function apply(){
+      const q = $("q").value.trim().toLowerCase();
+      const st = $("status").value;
+      const sort = $("sort").value;
+
+      let arr = registry.entries.slice();
+
+      if(st){
+        arr = arr.filter(e => String(e.status || DEFAULT_STATUS) === st);
+      }
+      if(q){
+        arr = arr.filter(e => {
+          const hay = [
+            e.id, e.entity, e.classification, e.jurisdiction,
+            ...(Array.isArray(e.tags)?e.tags:[])
+          ].join(" ").toLowerCase();
+          return hay.includes(q);
+        });
+      }
+
+      // sort
+      if(sort === "new"){
+        arr.sort((a,b)=> byIdNumeric(b,a));
+      }else if(sort === "old"){
+        arr.sort(byIdNumeric);
+      }else if(sort === "az"){
+        arr.sort((a,b)=> String(a.entity||"").localeCompare(String(b.entity||"")));
+      }else if(sort === "za"){
+        arr.sort((a,b)=> String(b.entity||"").localeCompare(String(a.entity||"")));
+      }
+
+      view = arr;
+      render();
+    }
+
+    function render(){
+      $("shown").textContent = String(view.length);
+      const list = $("list");
+      const empty = $("empty");
+
+      if(view.length === 0){
+        list.innerHTML = "";
+        empty.style.display = "block";
+        empty.innerHTML = `
+          <b>No matches.</b><br/>
+          Add more entries to <code>/registry/index.json</code> or loosen filters.
+          <div style="margin-top:10px; color:rgba(255,255,255,.70)">
+            Required format:
+            <pre><code>{
+  "updated": "YYYY-MM-DD",
+  "entries": [
+    {"id":"ATA-2026-0005","entity":"Meta Platforms, Inc.","status":"Unverified","path":"registry/ATA-2026-0005-META.md"}
+  ]
+}</code></pre>
+          </div>
+        `;
+        return;
+      }
+      empty.style.display = "none";
+      list.innerHTML = view.map(buildEntryCard).join("");
+
+      // bind click
+      [...list.querySelectorAll(".entry")].forEach(el=>{
+        el.addEventListener("click", ()=>{
+          const id = el.getAttribute("data-id");
+          const e = view.find(x => String(x.id) === String(id));
+          if(e) openEntry(e);
+        });
+      });
+    }
+
+    // ====== Modal ======
+    async function openEntry(e){
+      const url = e.path || "#";
+      $("btnOpenMd").href = url;
+
+      const [klass,label] = statusBadge(e.status);
+      const tags = Array.isArray(e.tags) ? e.tags : [];
+      const metaBits = [
+        `<span class="badge ${klass}" style="padding:5px 9px"><span class="dot"></span>${escapeHtml(label)}</span>`,
+        `<span class="chip">${escapeHtml(e.id || "")}</span>`,
+        e.classification ? `<span class="chip">${escapeHtml(e.classification)}</span>` : "",
+        e.jurisdiction ? `<span class="chip">${escapeHtml(e.jurisdiction)}</span>` : "",
+        e.updated ? `<span class="chip">Updated: ${escapeHtml(e.updated)}</span>` : ""
+      ].filter(Boolean).join("");
+
+      $("modalTitle").textContent = e.entity || e.id || "Entry";
+      $("modalMeta").innerHTML = metaBits;
+
+      $("btnCopyEntryCite").onclick = () => copyCitation(e);
+      $("btnCopyLink").onclick = async () => {
+        const link = location.origin + location.pathname.replace(/\/+$/,"") + `/#${encodeURIComponent(e.id||"")}`;
+        await navigator.clipboard.writeText(link);
+        toast("Link copied");
+      };
+
+      // load md if possible
+      $("md").innerHTML = "<p style='color:rgba(255,255,255,.70)'>Loading entry…</p>";
+      showModal(true);
+
+      try{
+        if(url && url !== "#"){
+          const res = await fetch(url, { cache: "no-store" });
+          if(!res.ok) throw new Error("md fetch failed");
+          const md = await res.text();
+          $("md").innerHTML = renderMarkdown(md);
+        }else{
+          $("md").innerHTML = "<p style='color:rgba(255,255,255,.70)'>No source path provided.</p>";
         }
-      }catch(e){
-        showError(e.message || String(e));
-      }finally{
-        $("loadBtn").textContent = "Load Ledger";
+      }catch(err){
+        $("md").innerHTML = `
+          <blockquote>Preview unavailable from this path on this domain.</blockquote>
+          <p style="color:rgba(255,255,255,.72)">
+            Open the source directly: <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(url)}</a>
+          </p>
+        `;
       }
-    });
 
-    $("refreshBtn").addEventListener("click", async () => {
-      $("refreshBtn").textContent = "Refreshing…";
-      try{
-        await load(true);
-      }catch(e){
-        // fallback to sample
-        try{ await load(false); }catch(_) {}
-        showError(e.message || String(e));
-      }finally{
-        $("refreshBtn").textContent = "Force Refresh";
+      // anchor in URL
+      if(e.id){
+        history.replaceState(null, "", `#${encodeURIComponent(e.id)}`);
       }
+    }
+
+    function showModal(on){
+      const mw = $("modalWrap");
+      mw.style.display = on ? "block" : "none";
+      mw.setAttribute("aria-hidden", on ? "false" : "true");
+    }
+
+    $("btnClose").addEventListener("click", ()=> showModal(false));
+    $("modalWrap").addEventListener("click", (ev)=>{
+      if(ev.target === $("modalWrap")) showModal(false);
+    });
+    window.addEventListener("keydown",(ev)=>{
+      if(ev.key === "Escape") showModal(false);
     });
 
-    $("copyCiteBtn").addEventListener("click", () => {
-      const id = state.selectedId || (state.rows[0]?.id || "ATA-0000-0000");
-      copyText(citationFor(id));
+    // ====== Citation ======
+    async function copyCitation(e){
+      const id = e?.id || "ATA-YYYY-NNNN";
+      const entity = e?.entity || "Entity";
+      const path = e?.path || "registry/ENTRY.md";
+      const repo = $("btnRepo").href || repoUrlGuess();
+      const txt =
+`APEX-ATA Ledger — ${id}
+Entity: ${entity}
+Source: ${path}
+Repo: ${repo}
+Anchor: ${location.origin + location.pathname.replace(/\/+$/,"") + "/#" + encodeURIComponent(id)}`;
+      await navigator.clipboard.writeText(txt);
+      toast("Citation copied");
+    }
+
+    $("btnCopyCite").addEventListener("click", async ()=>{
+      await copyCitation({id:"ATA-YYYY-NNNN", entity:"Entity Name", path:"registry/ATA-YYYY-NNNN-ENTITY.md"});
     });
 
-    $("copyEntryBtn").addEventListener("click", () => {
-      const id = state.selectedId;
-      if(!id){ alert("Select an entry first."); return; }
-      const r = state.rows.find(x => x.id === id);
-      copyText(`${citationFor(id)}\n\n${r.body}`);
+    // ====== Controls ======
+    $("q").addEventListener("input", apply);
+    $("status").addEventListener("change", apply);
+    $("sort").addEventListener("change", apply);
+    $("btnReset").addEventListener("click", ()=>{
+      $("q").value = "";
+      $("status").value = "";
+      $("sort").value = "new";
+      apply();
+      toast("Reset");
     });
 
-    $("openHashBtn").addEventListener("click", () => {
-      const id = state.selectedId;
-      if(!id){ alert("Select an entry first."); return; }
-      const url = new URL(location.href);
-      url.hash = encodeURIComponent(id);
-      copyText(url.toString());
-      alert("Link copied.");
+    // Jump
+    $("btnJump").addEventListener("click", ()=>{
+      const id = $("jumpId").value.trim();
+      if(!id){ toast("Enter an ID"); return; }
+      const e = registry.entries.find(x => String(x.id).toLowerCase() === id.toLowerCase());
+      if(!e){ toast("Not found in loaded registry"); return; }
+      openEntry(e);
     });
 
-    $("clearSelBtn").addEventListener("click", clearSel);
+    // ====== Hash deep-link ======
+    function openFromHash(){
+      const raw = decodeURIComponent((location.hash||"").replace("#","")).trim();
+      if(!raw) return;
+      const e = registry.entries.find(x => String(x.id).toLowerCase() === raw.toLowerCase());
+      if(e) openEntry(e);
+    }
 
-    $("downloadBtn").addEventListener("click", () => {
-      const blob = new Blob([JSON.stringify(state.raw.length ? state.raw : sample, null, 2)], {type:"application/json"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "apex_ata_ledger.json";
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
+    // ====== Boot ======
+    loadRegistry().then(()=> openFromHash());
 
-    wireSort();
-  }
-
-  // init
-  wire();
-
-  // auto-load sample instantly so it never looks empty
-  load(false).catch(e => showError(e.message || String(e)));
-})();
-</script>
+  </script>
 </body>
 </html>
